@@ -24,7 +24,7 @@ class ProfileScreen extends StatelessWidget {
               child: Icon(
                 Icons.person,
                 size: 50,
-                color: const Color.fromARGB(255, 34, 31, 42),
+                color: const Color.fromARGB(255, 255, 255, 255),
               ),
             ),
             const SizedBox(height: 16),
@@ -92,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
                 icon: const Icon(Icons.logout),
                 label: const Text('Logout'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: const Color.fromARGB(255, 244, 54, 54),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
