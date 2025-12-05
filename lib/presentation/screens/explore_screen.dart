@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import '../widgets/category_card.dart';
+import 'recipes_list_screen.dart';
 
 const Color kPrimaryColor = Color(0xFF30A58B);
 
@@ -26,7 +26,6 @@ class ExploreScreen extends StatelessWidget {
         toolbarHeight: 80,
         titleSpacing: 16,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
@@ -36,7 +35,8 @@ class ExploreScreen extends StatelessWidget {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search recipes...',
-                prefixIcon: Icon(Icons.search, color: kPrimaryColor.withOpacity(0.7)),
+                prefixIcon:
+                    Icon(Icons.search, color: kPrimaryColor.withOpacity(0.7)),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
@@ -47,7 +47,39 @@ class ExploreScreen extends StatelessWidget {
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade100,
-                contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // View All Recipes Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RecipesListScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                child: const Text(
+                  'View All Recipes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),

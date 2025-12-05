@@ -1,10 +1,10 @@
 name: rupp_final_mad
 description: Final project MAD II year4 s1
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -17,6 +17,7 @@ dependencies:
   google_sign_in: ^6.2.1
   firebase_auth: ^5.3.1
   firebase_core: ^3.6.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

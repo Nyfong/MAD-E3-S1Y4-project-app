@@ -1,12 +1,8 @@
-
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:rupp_final_mad/presentation/providers/auth_provider.dart';
 import 'package:rupp_final_mad/presentation/screens/explore_screen.dart';
 import 'package:rupp_final_mad/presentation/screens/my_recipe_screen.dart';
 import 'package:rupp_final_mad/presentation/screens/profile_screen.dart';
 import 'package:rupp_final_mad/presentation/screens/home_tab_screen.dart';
-
 
 const Color kPrimaryColor = Color(0xFF30A58B);
 
@@ -22,11 +18,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final userName = authProvider.userName;
-
     final List<Widget> screens = [
-      HomeTabScreen(userName: userName),
+      const HomeTabScreen(),
       const ExploreScreen(),
       const MyRecipeScreen(),
       const ProfileScreen(),
@@ -34,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: null,
-
       body: IndexedStack(
         index: _currentIndex,
         children: screens,

@@ -1,9 +1,13 @@
-// import 'package:google_sign_in/google_sign_in.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:rupp_final_mad/data/api/api_client.dart';
+import 'package:rupp_final_mad/data/api/api_config.dart';
+import 'package:rupp_final_mad/data/models/login_request.dart';
+import 'package:rupp_final_mad/data/models/login_response.dart';
+import 'package:rupp_final_mad/data/models/register_request.dart';
+import 'package:rupp_final_mad/data/models/register_response.dart';
 
 class AuthRemoteDataSource {
-  // final ApiClient _apiClient = ApiClient(); // Reserved for future API integration
-  // final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final ApiClient _apiClient = ApiClient();
 
   // Lazy-loaded Firebase Auth to avoid initialization errors
   // FirebaseAuth? _firebaseAuth;
@@ -18,47 +22,44 @@ class AuthRemoteDataSource {
   //   }
   // }
 
-  Future<bool> login(String email, String password) async {
+  Future<LoginResponse> login(String email, String password) async {
     try {
-      // Example API call structure
-      // final response = await _apiClient.post(
-      //   '/auth/login',
-      //   data: {
-      //     'email': email,
-      //     'password': password,
-      //   },
-      // );
-      // return response['success'] == true;
+      final request = LoginRequest(email: email, password: password);
+      debugPrint('Login request: ${request.toJson()}');
+      debugPrint('Login endpoint: ${ApiConfig.loginEndpoint}');
+      debugPrint('Base URL: ${ApiConfig.baseUrl}');
 
-      // For demo purposes - accept any valid email/password
-      // Demo credentials (optional - any email/password works):
-      // Email: admin@recipe.com
-      // Password: admin123
-      //
-      // Or use any email (with @) and password (6+ characters)
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-      return true;
-    } catch (e) {
+      final response = await _apiClient.post(
+        ApiConfig.loginEndpoint,
+        data: request.toJson(),
+      );
+
+      debugPrint('Login response: $response');
+      return LoginResponse.fromJson(response);
+    } catch (e, stackTrace) {
+      debugPrint('Login error: $e');
+      debugPrint('Stack trace: $stackTrace');
       throw Exception('Login failed: $e');
     }
   }
 
-  Future<bool> register(String name, String email, String password) async {
+  Future<RegisterResponse> register(
+      String name, String email, String password) async {
     try {
-      // Example API call structure
-      // final response = await _apiClient.post(
-      //   '/auth/register',
-      //   data: {
-      //     'name': name,
-      //     'email': email,
-      //     'password': password,
-      //   },
-      // );
-      // return response['success'] == true;
+      final request = RegisterRequest(
+        email: email,
+        displayName: name,
+        photoUrl: '', // Default empty, can be updated later
+        bio: '', // Default empty, can be updated later
+        password: password,
+      );
 
-      // For demo purposes - accept any valid registration
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-      return true;
+      final response = await _apiClient.post(
+        ApiConfig.registerEndpoint,
+        data: request.toJson(),
+      );
+
+      return RegisterResponse.fromJson(response);
     } catch (e) {
       throw Exception('Registration failed: $e');
     }

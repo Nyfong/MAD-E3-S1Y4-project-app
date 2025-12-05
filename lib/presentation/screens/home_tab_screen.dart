@@ -1,25 +1,68 @@
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:rupp_final_mad/data/models/recipe.dart';
+import 'package:rupp_final_mad/data/repositories/recipe_repository_impl.dart';
+import 'package:rupp_final_mad/presentation/providers/auth_provider.dart';
+import 'package:rupp_final_mad/presentation/screens/recipe_detail_screen.dart';
+import 'package:rupp_final_mad/presentation/screens/recipes_list_screen.dart';
+import 'package:rupp_final_mad/presentation/widgets/skeleton_loader.dart';
 
 const Color kPrimaryColor = Color(0xFF30A58B);
 
-class HomeTabScreen extends StatelessWidget {
-  final String userName;
+class HomeTabScreen extends StatefulWidget {
+  const HomeTabScreen({super.key});
 
-  const HomeTabScreen({
-    super.key,
-    required this.userName, // Now requires userName
-  });
+  @override
+  State<HomeTabScreen> createState() => _HomeTabScreenState();
+}
+
+class _HomeTabScreenState extends State<HomeTabScreen> {
+  final RecipeRepositoryImpl _recipeRepository = RecipeRepositoryImpl();
+  List<Recipe> _featuredRecipes = [];
+  bool _isLoadingRecipes = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFeaturedRecipes();
+  }
+
+  Future<void> _loadFeaturedRecipes() async {
+    try {
+      final recipes = await _recipeRepository.getRecipes(page: 1, limit: 5);
+      setState(() {
+        _featuredRecipes = recipes;
+        _isLoadingRecipes = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingRecipes = false;
+      });
+    }
+  }
+
+  void _navigateToDetail(Recipe recipe) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipeDetailScreen(recipeId: recipe.id),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Get userName from AuthProvider to ensure it updates when profile changes
+    final authProvider = Provider.of<AuthProvider>(context);
+    final userName = authProvider.userName;
     // Extract first name for a friendlier greeting
     final userFirstName = userName.split(' ').first;
 
     return Scaffold(
       // 2. Add the custom AppBar
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Prevents a back button from appearing
+        automaticallyImplyLeading:
+            false, // Prevents a back button from appearing
         toolbarHeight: 80, // Taller AppBar for better design
         backgroundColor: Colors.white,
         elevation: 0,
@@ -97,7 +140,14 @@ class HomeTabScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RecipesListScreen(),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kPrimaryColor, // Teal background
                         foregroundColor: Colors.white,
@@ -128,57 +178,119 @@ class HomeTabScreen extends StatelessWidget {
             // Featured Recipe List
             SizedBox(
               height: 220, // Increased height to fit larger cards
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Card(
-                    margin: const EdgeInsets.only(right: 16),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Container(
-                      width: 160, // Slightly wider card
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            height: 120, // Taller image container
-                            decoration: BoxDecoration(
-                              color: kPrimaryColor.withOpacity(0.1), // Light teal background
-                              borderRadius: BorderRadius.circular(10),
+              child: _isLoadingRecipes
+                  ? ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) {
+                        return Card(
+                          margin: const EdgeInsets.only(right: 16),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Container(
+                            width: 160,
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SkeletonLoader(
+                                  width: double.infinity,
+                                  height: 120,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                const SizedBox(height: 8),
+                                SkeletonLoader(
+                                    width: double.infinity, height: 16),
+                                const SizedBox(height: 4),
+                                SkeletonLoader(width: 100, height: 12),
+                              ],
                             ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.restaurant_menu_rounded,
-                                size: 50,
-                                color: kPrimaryColor, // Teal icon
+                          ),
+                        );
+                      },
+                    )
+                  : _featuredRecipes.isEmpty
+                      ? const Center(
+                          child: Text('No recipes available'),
+                        )
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _featuredRecipes.length,
+                          itemBuilder: (context, index) {
+                            final recipe = _featuredRecipes[index];
+                            return InkWell(
+                              onTap: () => _navigateToDetail(recipe),
+                              child: Card(
+                                margin: const EdgeInsets.only(right: 16),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Container(
+                                  width: 160, // Slightly wider card
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          recipe.imageUrl,
+                                          height: 120,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return Container(
+                                              height: 120,
+                                              decoration: BoxDecoration(
+                                                color: kPrimaryColor
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.restaurant_menu_rounded,
+                                                  size: 50,
+                                                  color: kPrimaryColor,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        recipe.title,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        recipe.description,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Recipe ${index + 1}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const Text(
-                            'Delicious dish',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),

@@ -1,9 +1,18 @@
 // File: lib/widgets/profile_action_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:rupp_final_mad/presentation/screens/edit_profile_screen.dart';
+import 'package:rupp_final_mad/data/models/user_profile.dart';
 
 class ProfileActionCard extends StatelessWidget {
-  const ProfileActionCard({super.key});
+  final UserProfile? userProfile;
+  final VoidCallback? onProfileUpdated;
+
+  const ProfileActionCard({
+    super.key,
+    this.userProfile,
+    this.onProfileUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +52,22 @@ class ProfileActionCard extends StatelessWidget {
           _buildActionItem(
             icon: Icons.person_outline_rounded,
             title: 'Edit Profile',
-            onTap: () {},
+            onTap: () async {
+              if (userProfile != null) {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditProfileScreen(
+                      userProfile: userProfile!,
+                    ),
+                  ),
+                );
+                // If profile was updated, refresh the profile screen
+                if (result == true && onProfileUpdated != null) {
+                  onProfileUpdated!();
+                }
+              }
+            },
           ),
           const Divider(height: 1, indent: 20, endIndent: 20),
           _buildActionItem(

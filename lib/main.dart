@@ -9,14 +9,14 @@ import 'package:rupp_final_mad/data/services/onboarding_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // TODO: Initialize Firebase when implementing real Google/Phone auth
   // try {
   //   await Firebase.initializeApp();
   // } catch (e) {
   //   debugPrint('Firebase not initialized: $e');
   // }
-  
+
   runApp(const MyApp());
 }
 
@@ -52,18 +52,20 @@ class AppInitializer extends StatefulWidget {
 class _AppInitializerState extends State<AppInitializer> {
   bool _isLoading = true;
   bool _showOnboarding = false;
+  bool _authChecked = false;
 
   @override
   void initState() {
     super.initState();
-    _checkOnboardingStatus();
+    _initializeApp();
   }
 
-  Future<void> _checkOnboardingStatus() async {
+  Future<void> _initializeApp() async {
     // Reset onboarding for testing - comment this out after testing
     await OnboardingService.resetOnboarding();
-    
+
     final isCompleted = await OnboardingService.isOnboardingCompleted();
+
     setState(() {
       _showOnboarding = !isCompleted;
       _isLoading = false;
@@ -86,6 +88,22 @@ class _AppInitializerState extends State<AppInitializer> {
 
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
+        // Check auth status on first build if not already checked
+        if (!_authChecked && !authProvider.isCheckingAuth) {
+          _authChecked = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            authProvider.checkAuthStatus();
+          });
+        }
+
+        if (authProvider.isCheckingAuth) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
         if (authProvider.isAuthenticated) {
           return const HomeScreen();
         }
