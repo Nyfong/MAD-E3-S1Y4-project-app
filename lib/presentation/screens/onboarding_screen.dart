@@ -1,6 +1,28 @@
+// File: lib/presentation/screens/onboarding_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:rupp_final_mad/presentation/screens/login_screen.dart';
 import 'package:rupp_final_mad/data/services/onboarding_service.dart';
+// Import the new widget created for the content
+// NOTE: We will only pass the page data to this widget now,
+// and handle buttons in the parent screen.
+import 'package:rupp_final_mad/presentation/widgets/onboarding_page_content.dart';
+
+// Define the Dark Mint color (Needed here for indicator)
+const Color kDarkMintColor = Color(0xFF1AA788);
+
+// --- Onboarding Page Data Model (Unchanged) ---
+class OnboardingPage {
+  final String imagePath;
+  final String title;
+  final String description;
+
+  OnboardingPage({
+    required this.imagePath,
+    required this.title,
+    required this.description,
+  });
+}
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -13,34 +35,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  // --- Data Model and Pages (Unchanged) ---
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      icon: Icons.restaurant_menu,
-      title: 'Welcome to Recipe App',
-      description:
-          'Discover thousands of delicious recipes from around the world. Cook amazing dishes and share your culinary creations with others.',
-      color: Colors.deepPurple,
+      imagePath: 'assets/images/image1.png',
+      title: 'Discover the Latest Trends ',
+      description: 'Stay ahead of the curve. Find curated content that matches your unique style and interests every day.',
     ),
     OnboardingPage(
-      icon: Icons.explore,
-      title: 'Explore Recipes',
-      description:
-          'Browse through a vast collection of recipes by category, cuisine, or ingredients. Find the perfect recipe for any occasion.',
-      color: Colors.orange,
+      imagePath: 'assets/images/image2.png',
+      title: 'Connect with Your Tribe ',
+      description: 'Join communities and chat with people who share your passion. Real connections, no filters.',
     ),
     OnboardingPage(
-      icon: Icons.restaurant,
-      title: 'Create Your Recipes',
-      description:
-          'Save and organize your favorite recipes. Create your own recipe collection and share them with friends and family.',
-      color: Colors.green,
+      imagePath: 'assets/images/image3.png',
+      title: 'Level Up Your Skills ',
+      description: 'Access quick, engaging lessons on everything from coding to cooking. Learn on the go, anytime.',
     ),
     OnboardingPage(
-      icon: Icons.favorite,
-      title: 'Save Favorites',
-      description:
-          'Bookmark your favorite recipes for quick access. Build your personal recipe library and never lose a great recipe again.',
-      color: Colors.red,
+      imagePath: 'assets/images/image4.png',
+      title: 'Ready to Dive In? ',
+      description: 'Unleash your potential and start creating. All the tools you need are right here, right now.',
     ),
   ];
 
@@ -49,6 +64,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _pageController.dispose();
     super.dispose();
   }
+
+  // --- Navigation Logic (Unchanged) ---
 
   Future<void> _completeOnboarding() async {
     await OnboardingService.completeOnboarding();
@@ -74,169 +91,143 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _completeOnboarding();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Skip button
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: _skipOnboarding,
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+  // --- Widget Builders (Moved from OnboardingPageContent) ---
 
-            // Page view
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  return _buildPage(_pages[index]);
-                },
-              ),
-            ),
-
-            // Page indicator
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _pages.length,
-                (index) => _buildPageIndicator(index == _currentPage),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Next/Get Started button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _nextPage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _pages[_currentPage].color,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: Text(
-                    _currentPage == _pages.length - 1
-                        ? 'Get Started'
-                        : 'Next',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-          ],
+  // Action Button for NEXT/GET STARTED
+  Widget _buildActionButton({required String text, required VoidCallback onPressed}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: kDarkMintColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        elevation: 6,
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
         ),
       ),
     );
   }
 
-  Widget _buildPage(OnboardingPage page) {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Icon
-          Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color: page.color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              page.icon,
-              size: 100,
-              color: page.color,
-            ),
+  // Skip Button
+  Widget _buildSkipButton() {
+    // Hidden on the last page
+    if (_currentPage == _pages.length - 1) return const SizedBox.shrink();
+
+    return Align(
+      alignment: Alignment.topRight,
+      child: TextButton(
+        onPressed: _skipOnboarding, // Navigates to main app route
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+        ),
+        child: Text(
+          'SKIP',
+          style: TextStyle(
+            fontSize: 17,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: 48),
-          // Title
-          Text(
-            page.title,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: page.color,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          // Description
-          Text(
-            page.description,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade700,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+        ),
       ),
     );
   }
 
+  // Page Indicator (Dots)
   Widget _buildPageIndicator(bool isActive) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: isActive ? 24 : 8,
-      height: 8,
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      width: isActive ? 24 : 10,
+      height: 10,
       decoration: BoxDecoration(
-        color: isActive
-            ? _pages[_currentPage].color
-            : Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(4),
+        color: isActive ? kDarkMintColor : Colors.grey.shade400,
+        borderRadius: BorderRadius.circular(5),
+      ),
+    );
+  }
+
+  // --- UI Build Method (Main Logic Change) ---
+
+  @override
+  Widget build(BuildContext context) {
+    // We use Stack to layer the static elements (buttons, dots) over the sliding PageView
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // 1. Sliding Content (PageView) - Fills the entire space
+            PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemCount: _pages.length,
+              itemBuilder: (context, index) {
+                // The content widget now only needs the page data.
+                // It should NOT contain the Skip button, dots, or action button.
+                return OnboardingPageContent(
+                  page: _pages[index],
+                  // Pass the page and context, but strip out the buttons/indicators
+                  isLastPage: index == _pages.length - 1, // Still useful for content logic
+                  // Placeholder/unused: The buttons are now controlled by the parent screen
+                  onNextPressed: _nextPage,
+                  onSkipPressed: _skipOnboarding,
+                  currentPageIndex: index,
+                  totalPages: _pages.length,
+                );
+              },
+            ),
+
+            // 2. Static Overlay (Buttons and Indicators)
+
+            // A. Skip Button (Top Right)
+            _buildSkipButton(),
+
+            // B. Bottom Controls (Dots and Action Button)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(30.0, 0, 30.0, 30.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // Wrap content height
+                  children: [
+                    // Dots (Page Indicators)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _pages.length,
+                            (index) => _buildPageIndicator(index == _currentPage),
+                      ),
+                    ),
+                    const SizedBox(height: 50), // Spacing between dots and button
+
+                    // Action Button (NEXT or GET STARTED)
+                    SizedBox(
+                      height: 60,
+                      width: double.infinity,
+                      child: _currentPage == _pages.length - 1
+                          ? _buildActionButton(text: 'GET STARTED', onPressed: _nextPage)
+                          : _buildActionButton(text: 'NEXT', onPressed: _nextPage),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-class OnboardingPage {
-  final IconData icon;
-  final String title;
-  final String description;
-  final Color color;
-
-  OnboardingPage({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.color,
-  });
-}
-

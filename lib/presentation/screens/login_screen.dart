@@ -1,9 +1,16 @@
+// File: lib/presentation/screens/login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rupp_final_mad/presentation/providers/auth_provider.dart';
 import 'package:rupp_final_mad/presentation/screens/home_screen.dart';
-import 'package:rupp_final_mad/presentation/screens/register_screen.dart';
 import 'package:rupp_final_mad/presentation/screens/phone_login_screen.dart';
+import 'package:rupp_final_mad/presentation/screens/register_screen.dart';
+import 'package:rupp_final_mad/presentation/widgets/login_form_ui.dart';
+
+// --- Updated Color Palette (Teal/Sea Green: #30A58B) ---
+const Color kPrimaryColor = Color(0xFF30A58B); // Teal/Sea Green
+const Color kAccentColor = Color(0xFF30A58B); // Teal/Sea Green
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +20,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // --- Controllers and State ---
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -24,7 +32,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Listen to auth state changes
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     authProvider.addListener(_onAuthStateChanged);
   }
@@ -38,10 +45,11 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // --- Auth & Navigation Logic ---
+
   void _onAuthStateChanged() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.isAuthenticated && mounted) {
-      // Navigate to home screen when authenticated
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
@@ -50,9 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() { _isLoading = true; });
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final success = await authProvider.login(
@@ -60,9 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() { _isLoading = false; });
 
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -76,16 +80,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleLogin() async {
-    setState(() {
-      _isGoogleLoading = true;
-    });
+    setState(() { _isGoogleLoading = true; });
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.loginWithGoogle();
 
-    setState(() {
-      _isGoogleLoading = false;
-    });
+    setState(() { _isGoogleLoading = false; });
 
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,183 +105,47 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _navigateToRegister() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const RegisterScreen(),
+      ),
+    );
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscurePassword = !_obscurePassword;
+    });
+  }
+
+  // --- UI Build Method (Delegating to LoginFormUI) ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Icon(
-                    Icons.restaurant_menu,
-                    size: 80,
-                    color: Colors.deepPurple,
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Recipe App',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 48),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                      border: const OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            'Login',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                      ),
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Google Sign-In Button
-                  OutlinedButton.icon(
-                    onPressed: _isGoogleLoading ? null : _handleGoogleLogin,
-                    icon: _isGoogleLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Image.asset(
-                            'assets/images/google_logo.png',
-                            height: 20,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.g_mobiledata, size: 24);
-                            },
-                          ),
-                    label: const Text('Continue with Google'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Phone Sign-In Button
-                  OutlinedButton.icon(
-                    onPressed: _isPhoneLoading ? null : _handlePhoneLogin,
-                    icon: const Icon(Icons.phone),
-                    label: const Text('Continue with Phone'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account? "),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text('Register'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+        child: LoginFormUI(
+          // Controllers and Keys
+          formKey: _formKey,
+          emailController: _emailController,
+          passwordController: _passwordController,
+
+          // State Variables
+          obscurePassword: _obscurePassword,
+          isLoading: _isLoading,
+          isGoogleLoading: _isGoogleLoading,
+          isPhoneLoading: _isPhoneLoading,
+
+          // Action Callbacks
+          onLoginPressed: _handleLogin,
+          onGoogleLoginPressed: _handleGoogleLogin,
+          onPhoneLoginPressed: _handlePhoneLogin,
+          onTogglePasswordVisibility: _togglePasswordVisibility,
+          onRegisterPressed: _navigateToRegister,
         ),
       ),
     );
   }
 }
-
