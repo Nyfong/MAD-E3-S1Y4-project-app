@@ -159,7 +159,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         final ingredientControllers = <TextEditingController>[
@@ -173,13 +173,8 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
           if (recipe.instructions.isEmpty) TextEditingController(),
         ];
 
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
+        return FractionallySizedBox(
+          heightFactor: 0.9,
           child: StatefulBuilder(
             builder: (context, setModalState) {
               Future<void> submit() async {
@@ -246,196 +241,216 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                 }
               }
 
-              return SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Edit Recipe',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed:
-                              _isCreating ? null : () => Navigator.pop(context),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildTextField(titleController, 'Title',
-                        icon: Icons.title, required: true),
-                    _buildTextField(descriptionController, 'Description',
-                        icon: Icons.description, maxLines: 2, required: true),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Ingredients',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      children: [
-                        for (int i = 0; i < ingredientControllers.length; i++)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${i + 1}.',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: ingredientControllers[i],
-                                    decoration: InputDecoration(
-                                      hintText: 'Ingredient ${i + 1}',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      filled: true,
-                                      fillColor: Colors.grey.shade100,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                if (ingredientControllers.length > 1)
-                                  IconButton(
-                                    icon: const Icon(
-                                        Icons.remove_circle_outline,
-                                        color: Colors.redAccent),
-                                    tooltip: 'Remove ingredient',
-                                    onPressed: () {
-                                      setModalState(() {
-                                        ingredientControllers
-                                            .removeAt(i)
-                                            .dispose();
-                                      });
-                                    },
-                                  ),
-                              ],
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 16,
+                  right: 16,
+                  top: 20,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Edit Recipe',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: () {
-                              setModalState(() {
-                                ingredientControllers
-                                    .add(TextEditingController());
-                              });
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add ingredient'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Instructions',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      children: [
-                        for (int i = 0; i < instructionControllers.length; i++)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${i + 1}.',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: instructionControllers[i],
-                                    maxLines: null,
-                                    decoration: InputDecoration(
-                                      hintText: 'Step ${i + 1}',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      filled: true,
-                                      fillColor: Colors.grey.shade100,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                if (instructionControllers.length > 1)
-                                  IconButton(
-                                    icon: const Icon(
-                                        Icons.remove_circle_outline,
-                                        color: Colors.redAccent),
-                                    tooltip: 'Remove step',
-                                    onPressed: () {
-                                      setModalState(() {
-                                        instructionControllers
-                                            .removeAt(i)
-                                            .dispose();
-                                      });
-                                    },
-                                  ),
-                              ],
+                          const Spacer(),
+                          Container(
+                            margin: const EdgeInsets.only(right: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.close),
+                              tooltip: 'Cancel',
+                              onPressed: () => Navigator.pop(context),
                             ),
                           ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: () {
-                              setModalState(() {
-                                instructionControllers
-                                    .add(TextEditingController());
-                              });
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add step'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      _buildTextField(titleController, 'Title',
+                          icon: Icons.title, required: true),
+                      _buildTextField(descriptionController, 'Description',
+                          icon: Icons.description, maxLines: 2, required: true),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Ingredients',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Column(
+                        children: [
+                          for (int i = 0; i < ingredientControllers.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${i + 1}.',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: ingredientControllers[i],
+                                      decoration: InputDecoration(
+                                        hintText: 'Ingredient ${i + 1}',
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey.shade100,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  if (ingredientControllers.length > 1)
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          color: Colors.redAccent),
+                                      tooltip: 'Remove ingredient',
+                                      onPressed: () {
+                                        setModalState(() {
+                                          ingredientControllers
+                                              .removeAt(i)
+                                              .dispose();
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () {
+                                setModalState(() {
+                                  ingredientControllers
+                                      .add(TextEditingController());
+                                });
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add ingredient'),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isCreating ? null : submit,
-                        icon: _isCreating
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.check),
-                        label: Text(_isCreating ? 'Saving...' : 'Save changes'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Instructions',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Column(
+                        children: [
+                          for (int i = 0;
+                              i < instructionControllers.length;
+                              i++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${i + 1}.',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: instructionControllers[i],
+                                      maxLines: null,
+                                      decoration: InputDecoration(
+                                        hintText: 'Step ${i + 1}',
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey.shade100,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  if (instructionControllers.length > 1)
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          color: Colors.redAccent),
+                                      tooltip: 'Remove step',
+                                      onPressed: () {
+                                        setModalState(() {
+                                          instructionControllers
+                                              .removeAt(i)
+                                              .dispose();
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () {
+                                setModalState(() {
+                                  instructionControllers
+                                      .add(TextEditingController());
+                                });
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add step'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _isCreating ? null : submit,
+                          icon: _isCreating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.check),
+                          label:
+                              Text(_isCreating ? 'Saving...' : 'Save changes'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+                      const SizedBox(height: 12),
+                    ],
+                  ),
                 ),
               );
             },
