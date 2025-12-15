@@ -100,8 +100,6 @@ class ProfileHeader extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     bio!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.white.withOpacity(0.9),

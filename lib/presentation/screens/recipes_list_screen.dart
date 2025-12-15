@@ -117,22 +117,19 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
 
   // Responsive grid configuration
   int _getCrossAxisCount(double width) {
-    if (width > 900) {
-      return 3; // Large screens: 3 columns
-    } else if (width > 600) {
-      return 2; // Medium screens: 2 columns
-    } else {
-      return 2; // Small screens: 2 columns
-    }
+    // Always use a single column to show one card per row
+    return 1;
   }
 
   double _getChildAspectRatio(double width) {
+    // Make cards tall enough (1 column, Instagram-style layout)
+    // aspectRatio = width / height  -> smaller value = more height
     if (width > 900) {
-      return 0.75; // Slightly taller for 3 columns
+      return 0.7;
     } else if (width > 600) {
-      return 0.72; // Medium aspect ratio
+      return 0.75;
     } else {
-      return 0.7; // Standard for 2 columns
+      return 0.8;
     }
   }
 
@@ -204,12 +201,12 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                       const Icon(Icons.search, color: kPrimaryColor),
                       const SizedBox(width: 8),
                       Expanded(
-            child: TextField(
-              controller: _searchController,
+                        child: TextField(
+                          controller: _searchController,
                           decoration: const InputDecoration(
                             hintText: 'Search by recipe name...',
                             border: InputBorder.none,
-                ),
+                          ),
                         ),
                       ),
                       if (_searchQuery.isNotEmpty)
@@ -221,10 +218,10 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                           },
                         ),
                     ],
-              ),
-            ),
+                  ),
+                ),
               ],
-          ),
+            ),
           ),
           const SizedBox(height: 8),
           Expanded(

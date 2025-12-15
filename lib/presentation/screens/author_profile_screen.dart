@@ -99,14 +99,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen> {
                   : null,
               recipesCount: _recipes.isNotEmpty ? _recipes.length : null,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Author ID: ${widget.authorId}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
             const SizedBox(height: 24),
             const Text(
               'Recipes by this author',
