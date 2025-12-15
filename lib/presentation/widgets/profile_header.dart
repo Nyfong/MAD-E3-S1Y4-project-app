@@ -20,102 +20,129 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Branded color for the avatar background
     const Color kPrimaryColor = Color(0xFF30A58B);
 
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [kPrimaryColor, Color(0xFF1E7F68)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
       ),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            // Branded Avatar
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: kPrimaryColor.withOpacity(0.1),
-              backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
-                  ? NetworkImage(photoUrl!)
-                  : null,
-              child: photoUrl == null || photoUrl!.isEmpty
-                  ? const Icon(
-                      Icons.person_rounded,
-                      size: 50,
-                      color: kPrimaryColor,
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 16),
-
-            // User Name
-            Text(
-              userName,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // User Email
-            Text(
-              userEmail,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-
-            // Bio (if available)
-            if (bio != null && bio!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                bio!,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade700,
-                  fontStyle: FontStyle.italic,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Avatar
+          CircleAvatar(
+            radius: 38,
+            backgroundColor: Colors.white.withOpacity(0.12),
+            backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                ? NetworkImage(photoUrl!)
+                : null,
+            child: photoUrl == null || photoUrl!.isEmpty
+                ? const Icon(
+                    Icons.person_rounded,
+                    size: 40,
+                    color: Colors.white,
+                  )
+                : null,
+          ),
+          const SizedBox(width: 18),
+          // Name, email, bio and stats
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  userName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-
-            // Recipes Count (if available)
-            if (recipesCount != null) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: kPrimaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
+                const SizedBox(height: 4),
+                Text(
+                  userEmail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.85),
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                if (bio != null && bio!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    bio!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Row(
                   children: [
-                    Icon(
-                      Icons.restaurant_menu,
-                      size: 18,
-                      color: kPrimaryColor,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '$recipesCount Recipes',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: kPrimaryColor,
+                    if (recipesCount != null)
+                      _StatChip(
+                        icon: Icons.restaurant_menu_rounded,
+                        label: '$recipesCount recipes',
                       ),
-                    ),
                   ],
                 ),
-              ),
-            ],
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

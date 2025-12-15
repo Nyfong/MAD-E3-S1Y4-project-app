@@ -8,7 +8,6 @@ import 'package:rupp_final_mad/presentation/widgets/skeleton_loader.dart';
 
 // Assuming these imports are correct based on your setup
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 import 'login_screen.dart';
 
 // Import the custom widgets
@@ -217,79 +216,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 8),
+                      // Header
+                      ProfileHeader(
+                        userName: _userProfile?.displayName ?? userName,
+                        userEmail: _userProfile?.email ?? userEmail,
+                        photoUrl: _userProfile?.photoUrl,
+                        bio: _userProfile?.bio,
+                        recipesCount: _userProfile?.recipesCount,
+                      ),
+                      const SizedBox(height: 24),
+                      // Profile settings section
                       const Text(
-                        'Account',
+                        'Profile',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 12),
-
-                      // 1. User Header (Reusable Widget)
-                      Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.08),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: ProfileHeader(
-                            userName: _userProfile?.displayName ?? userName,
-                            userEmail: _userProfile?.email ?? userEmail,
-                            photoUrl: _userProfile?.photoUrl,
-                            bio: _userProfile?.bio,
-                            recipesCount: _userProfile?.recipesCount,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      const Text(
-                        'Profile settings',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
                       const SizedBox(height: 8),
-
-                      // 2. Action Card (Reusable Widget)
-                      ProfileActionCard(
-                        userProfile: _userProfile,
-                        onProfileUpdated: () async {
-                          await _loadUserProfile();
-                          // Also refresh auth provider to update cached user name
-                          if (mounted) {
-                            final authProvider = Provider.of<AuthProvider>(
-                                context,
-                                listen: false);
-                            await authProvider.refreshUserProfile();
-                          }
-                        },
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // 3. Logout Button (Styled for consistency)
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.red.withOpacity(0.18),
+                              color: Colors.black.withOpacity(0.04),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
                           ],
                         ),
+                        child: ProfileActionCard(
+                          userProfile: _userProfile,
+                          onProfileUpdated: () async {
+                            await _loadUserProfile();
+                            // Also refresh auth provider to update cached user name
+                            if (mounted) {
+                              final authProvider = Provider.of<AuthProvider>(
+                                  context,
+                                  listen: false);
+                              await authProvider.refreshUserProfile();
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Logout
+                      const Text(
+                        'Security',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.16),
+                              blurRadius: 18,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
                         child: ElevatedButton.icon(
                           onPressed: () async {
-                            // Logout Logic
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  title: const Text('Logout'),
+                                  content: const Text(
+                                      'Are you sure you want to logout?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('Logout'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (confirm != true) return;
+
                             await authProvider.logout();
                             if (context.mounted) {
                               Navigator.of(context).pushReplacement(
@@ -299,11 +322,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                             }
                           },
-                          icon: const Icon(Icons.logout),
+                          icon: const Icon(Icons.logout_rounded),
                           label: const Text(
                             'Logout',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.redAccent,
