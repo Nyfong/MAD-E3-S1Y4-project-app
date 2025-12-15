@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'package:firebase_core/firebase_core.dart'; // TODO: Uncomment when implementing real auth
 import 'package:rupp_final_mad/presentation/providers/auth_provider.dart';
+import 'package:rupp_final_mad/presentation/providers/theme_provider.dart';
 import 'package:rupp_final_mad/presentation/screens/login_screen.dart';
 import 'package:rupp_final_mad/presentation/screens/home_screen.dart';
 import 'package:rupp_final_mad/presentation/screens/onboarding_screen.dart';
@@ -28,15 +29,57 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'Recipe App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        home: const AppInitializer(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          final seed = const Color(0xFF30A58B);
+          final lightScheme = ColorScheme.fromSeed(
+              seedColor: seed, brightness: Brightness.light);
+          final darkScheme = ColorScheme.fromSeed(
+              seedColor: seed, brightness: Brightness.dark);
+
+          return MaterialApp(
+            title: 'Recipe App',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeProvider.themeMode,
+            theme: ThemeData(
+              colorScheme: lightScheme,
+              scaffoldBackgroundColor: Colors.grey.shade50,
+              cardColor: Colors.white,
+              appBarTheme: AppBarTheme(
+                backgroundColor: Colors.white,
+                foregroundColor: lightScheme.onSurface,
+                elevation: 0,
+              ),
+              listTileTheme: ListTileThemeData(
+                iconColor: seed,
+                textColor: lightScheme.onSurface,
+              ),
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: darkScheme,
+              scaffoldBackgroundColor: const Color(0xFF0F1518),
+              cardColor: const Color(0xFF1A2228),
+              appBarTheme: AppBarTheme(
+                backgroundColor: const Color(0xFF0F1518),
+                foregroundColor: darkScheme.onSurface,
+                elevation: 0,
+              ),
+              listTileTheme: ListTileThemeData(
+                iconColor: seed,
+                textColor: darkScheme.onSurface,
+              ),
+              textTheme: Typography.whiteMountainView.apply(
+                bodyColor: darkScheme.onSurface,
+                displayColor: darkScheme.onSurface,
+              ),
+              useMaterial3: true,
+            ),
+            home: const AppInitializer(),
+          );
+        },
       ),
     );
   }

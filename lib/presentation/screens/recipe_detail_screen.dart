@@ -18,6 +18,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final RecipeRepositoryImpl _recipeRepository = RecipeRepositoryImpl();
   Recipe? _recipe;
   bool _isLoading = true;
+  bool _isLiking = false;
   String _errorMessage = '';
 
   @override
@@ -43,6 +44,36 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         _errorMessage = 'Failed to load recipe: ${e.toString()}';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (_recipe == null || _isLiking) return;
+
+    setState(() {
+      _isLiking = true;
+    });
+
+    try {
+      final updatedRecipe = await _recipeRepository.toggleLike(
+        _recipe!.id,
+        currentRecipe: _recipe,
+      );
+      if (!mounted) return;
+      setState(() {
+        _recipe = updatedRecipe;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to like recipe: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLiking = false;
+        });
+      }
     }
   }
 
@@ -131,6 +162,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         SliverAppBar(
                           expandedHeight: 300,
                           pinned: true,
+                          actions: [
+                            IconButton(
+                              onPressed: _isLiking ? null : () => _toggleLike(),
+                              icon: _isLiking
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation(
+                                            Colors.white),
+                                      ),
+                                    )
+                                  : Icon(
+                                      _recipe?.isLiked ?? false
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                    ),
+                              color: Colors.redAccent,
+                              tooltip: 'Like',
+                            ),
+                          ],
                           flexibleSpace: FlexibleSpaceBar(
                             background: Image.network(
                               _recipe!.imageUrl,
@@ -201,10 +254,45 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 // Stats
                                 Row(
                                   children: [
-                                    _buildStatItem(
-                                      Icons.favorite,
-                                      '${_recipe!.likesCount}',
-                                      Colors.red,
+                                    InkWell(
+                                      onTap: _isLiking ? null : _toggleLike,
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 4,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              _recipe!.isLiked
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              size: 20,
+                                              color: Colors.red,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${_recipe!.likesCount}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade700,
+                                              ),
+                                            ),
+                                            if (_isLiking) ...[
+                                              const SizedBox(width: 6),
+                                              const SizedBox(
+                                                width: 12,
+                                                height: 12,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(width: 24),
                                     _buildStatItem(

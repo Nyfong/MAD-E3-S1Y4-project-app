@@ -47,6 +47,58 @@ class RecipeRemoteDataSource {
     }
   }
 
+  Future<Recipe> toggleLike(
+    String id, {
+    Recipe? currentRecipe,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiConfig.recipeLikeEndpoint(id),
+      );
+
+      if (response.containsKey('payload')) {
+        return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+      }
+
+      // If API returns only status/message, fall back to optimistic toggle
+      if (currentRecipe != null) {
+        return _toggleLocal(currentRecipe);
+      }
+
+      return Recipe.fromJson(response);
+    } catch (e) {
+      debugPrint('API like failed, using fallback toggle: $e');
+      final fallback =
+          currentRecipe ?? FallbackDataService.getFallbackRecipe(id);
+      return _toggleLocal(fallback);
+    }
+  }
+
+  Recipe _toggleLocal(Recipe recipe) {
+    final updatedLikes = recipe.likesCount + (recipe.isLiked ? -1 : 1);
+    return Recipe(
+      id: recipe.id,
+      title: recipe.title,
+      description: recipe.description,
+      difficulty: recipe.difficulty,
+      cookingTime: recipe.cookingTime,
+      servings: recipe.servings,
+      cuisine: recipe.cuisine,
+      imageUrl: recipe.imageUrl,
+      authorId: recipe.authorId,
+      authorName: recipe.authorName,
+      authorPhotoURL: recipe.authorPhotoURL,
+      ingredients: recipe.ingredients,
+      instructions: recipe.instructions,
+      tags: recipe.tags,
+      likesCount: updatedLikes < 0 ? 0 : updatedLikes,
+      bookmarksCount: recipe.bookmarksCount,
+      isLiked: !recipe.isLiked,
+      isBookmarked: recipe.isBookmarked,
+      createdAt: recipe.createdAt,
+    );
+  }
+
   Future<RecipesResponse> getUserRecipes() async {
     try {
       final response = await _apiClient.get(
@@ -64,6 +116,51 @@ class RecipeRemoteDataSource {
         status: 200,
         timestamp: DateTime.now().toIso8601String(),
       );
+    }
+  }
+
+  Future<void> deleteRecipe(String id) async {
+    try {
+      await _apiClient.delete(ApiConfig.recipeDetailEndpoint(id));
+    } catch (e) {
+      debugPrint('API delete failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Recipe> createRecipe(Map<String, dynamic> data) async {
+    try {
+      final response = await _apiClient.post(
+        ApiConfig.recipeCreateEndpoint,
+        data: data,
+      );
+
+      if (response.containsKey('payload')) {
+        return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+      }
+
+      return Recipe.fromJson(response);
+    } catch (e) {
+      debugPrint('API create recipe failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Recipe> updateRecipe(String id, Map<String, dynamic> data) async {
+    try {
+      final response = await _apiClient.put(
+        ApiConfig.recipeDetailEndpoint(id),
+        data: data,
+      );
+
+      if (response.containsKey('payload')) {
+        return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+      }
+
+      return Recipe.fromJson(response);
+    } catch (e) {
+      debugPrint('API update recipe failed: $e');
+      rethrow;
     }
   }
 }

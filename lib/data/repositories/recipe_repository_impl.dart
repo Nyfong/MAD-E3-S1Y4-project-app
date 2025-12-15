@@ -34,4 +34,43 @@ class RecipeRepositoryImpl implements RecipeRepository {
       throw Exception('Failed to get user recipes: $e');
     }
   }
+
+  @override
+  Future<Recipe> toggleLike(String id, {Recipe? currentRecipe}) async {
+    try {
+      return await _remoteDataSource.toggleLike(
+        id,
+        currentRecipe: currentRecipe,
+      );
+    } catch (e) {
+      throw Exception('Failed to like recipe: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteRecipe(String id) async {
+    try {
+      await _remoteDataSource.deleteRecipe(id);
+    } catch (e) {
+      throw Exception('Failed to delete recipe: $e');
+    }
+  }
+
+  @override
+  Future<Recipe> createRecipe(Map<String, dynamic> data) async {
+    try {
+      return await _remoteDataSource.createRecipe(data);
+    } catch (e) {
+      throw Exception('Failed to create recipe: $e');
+    }
+  }
+
+  @override
+  Future<Recipe> updateRecipe(String id, Map<String, dynamic> data) async {
+    try {
+      return await _remoteDataSource.updateRecipe(id, data);
+    } catch (e) {
+      throw Exception('Failed to update recipe: $e');
+    }
+  }
 }

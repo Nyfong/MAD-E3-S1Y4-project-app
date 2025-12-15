@@ -139,46 +139,94 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7F9),
       appBar: AppBar(
-        title: const Text(
-          'Recipes',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: kPrimaryColor,
-          ),
-        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        toolbarHeight: 80,
+        toolbarHeight: 72,
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: kPrimaryColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.menu_book_rounded,
+                color: kPrimaryColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'All Recipes',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
-          // Search Bar
+          const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Browse and discover recipes from the community.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 12),
+                      const Icon(Icons.search, color: kPrimaryColor),
+                      const SizedBox(width: 8),
+                      Expanded(
             child: TextField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search recipes by name...',
-                prefixIcon:
-                    Icon(Icons.search, color: kPrimaryColor.withOpacity(0.7)),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+                          decoration: const InputDecoration(
+                            hintText: 'Search by recipe name...',
+                            border: InputBorder.none,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: kPrimaryColor, width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade100,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
+                        ),
+                      ),
+                      if (_searchQuery.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged();
+                          },
+                        ),
+                    ],
               ),
             ),
+              ],
           ),
-          // Recipe Grid
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {

@@ -8,6 +8,7 @@ import 'package:rupp_final_mad/presentation/widgets/skeleton_loader.dart';
 
 // Assuming these imports are correct based on your setup
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import 'login_screen.dart';
 
 // Import the custom widgets
@@ -66,28 +67,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userEmail = authProvider.userEmail;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7F9),
       appBar: AppBar(
-        title: const Text(
-          'My Profile',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: kPrimaryColor,
-          ),
-        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        toolbarHeight: 80,
+        toolbarHeight: 72,
         centerTitle: false,
         titleSpacing: 16.0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: kPrimaryColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.person_rounded,
+                color: kPrimaryColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Profile',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
       body: _isLoading
           ? SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 8, 16.0, 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [kPrimaryColor, Color(0xFF1E7F68)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        SkeletonLoader(
+                          width: 140,
+                          height: 22,
+                        ),
+                        SizedBox(height: 8),
+                        SkeletonLoader(
+                          width: 220,
+                          height: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   // Skeleton for Profile Header
                   Card(
                     shape: RoundedRectangleBorder(
@@ -134,48 +178,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
             )
           : _errorMessage.isNotEmpty
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 80,
-                        color: Colors.red.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        _errorMessage,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.red,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 80,
+                          color: Colors.red.withOpacity(0.5),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => _loadUserProfile(),
-                        child: const Text('Retry'),
-                      ),
-                    ],
+                        const SizedBox(height: 24),
+                        Text(
+                          _errorMessage,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.red,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _loadUserProfile(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
+                  padding: const EdgeInsets.fromLTRB(16.0, 8, 16.0, 16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Account',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
                       // 1. User Header (Reusable Widget)
-                      ProfileHeader(
-                        userName: _userProfile?.displayName ?? userName,
-                        userEmail: _userProfile?.email ?? userEmail,
-                        photoUrl: _userProfile?.photoUrl,
-                        bio: _userProfile?.bio,
-                        recipesCount: _userProfile?.recipesCount,
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.08),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: ProfileHeader(
+                            userName: _userProfile?.displayName ?? userName,
+                            userEmail: _userProfile?.email ?? userEmail,
+                            photoUrl: _userProfile?.photoUrl,
+                            bio: _userProfile?.bio,
+                            recipesCount: _userProfile?.recipesCount,
+                          ),
+                        ),
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 20),
+
+                      const Text(
+                        'Profile settings',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
 
                       // 2. Action Card (Reusable Widget)
                       ProfileActionCard(
@@ -195,34 +276,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 24),
 
                       // 3. Logout Button (Styled for consistency)
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          // Logout Logic
-                          await authProvider.logout();
-                          if (context.mounted) {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.logout),
-                        label: const Text(
-                          'Logout',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.18),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimaryColor, // Red Logout color
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(15), // Consistent radius
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            // Logout Logic
+                            await authProvider.logout();
+                            if (context.mounted) {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.logout),
+                          label: const Text(
+                            'Logout',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
-                          elevation: 6,
-                          shadowColor: kPrimaryColor.withOpacity(0.5),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
                         ),
                       ),
                     ],

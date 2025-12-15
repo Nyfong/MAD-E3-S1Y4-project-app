@@ -29,7 +29,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   Future<void> _loadFeaturedRecipes() async {
     try {
-      final recipes = await _recipeRepository.getRecipes(page: 1, limit: 5);
+      final recipes = await _recipeRepository.getRecipes(page: 1, limit: 10);
       setState(() {
         _featuredRecipes = recipes;
         _isLoadingRecipes = false;
@@ -58,88 +58,213 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     // Extract first name for a friendlier greeting
     final userFirstName = userName.split(' ').first;
 
+    // Derive a "most favorite" list sorted by likes (descending)
+    final List<Recipe> mostFavorite = List.of(_featuredRecipes)
+      ..sort((a, b) => (b.likesCount).compareTo(a.likesCount));
+
     return Scaffold(
-      // 2. Add the custom AppBar
+      backgroundColor: const Color(0xFFF5F7F9),
       appBar: AppBar(
-        automaticallyImplyLeading:
-            false, // Prevents a back button from appearing
-        toolbarHeight: 80, // Taller AppBar for better design
+        automaticallyImplyLeading: false,
+        toolbarHeight: 80,
         backgroundColor: Colors.white,
         elevation: 0,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Greeting Text
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hello, $userFirstName!', // Use dynamic name
+                  'Hello, $userFirstName',
                   style: const TextStyle(
                     fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     color: Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'What would you like to cook today?',
+                  'Find your next favorite dish',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.normal,
                     color: Colors.grey.shade600,
                   ),
                 ),
               ],
             ),
-
-            // Avatar
             CircleAvatar(
               radius: 24,
               backgroundColor: kPrimaryColor.withOpacity(0.15),
               child: const Icon(
                 Icons.person_rounded,
-                color: kPrimaryColor, // Teal icon color
+                color: kPrimaryColor,
                 size: 28,
               ),
             ),
           ],
         ),
       ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // NOTE: Removed the redundant 'Welcome to Recipe App' text since it's now in the AppBar
-
-            // Design Update: Card using kPrimaryColor
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
+      body: RefreshIndicator(
+        onRefresh: _loadFeaturedRecipes,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [kPrimaryColor, Color(0xFF1E7F68)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: kPrimaryColor.withOpacity(0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Discover Amazing Recipes',
+                      'Discover amazing recipes',
                       style: TextStyle(
+                        color: Colors.white,
                         fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     const Text(
-                      'Explore a world of delicious recipes and create your own culinary masterpieces.',
-                      style: TextStyle(color: Colors.grey),
+                      'Explore, save favorites and create your own.',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    ElevatedButton(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.18),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.star_rate_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${_featuredRecipes.length}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Featured picks',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RecipesListScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.explore),
+                          label: const Text('Explore all'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: kPrimaryColor,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 12),
+                    const Icon(Icons.search, color: kPrimaryColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          hintText: 'Search recipes, cuisines, ingredients...',
+                          border: InputBorder.none,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RecipesListScreen(),
+                            ),
+                          );
+                        },
+                        readOnly: true,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.tune, color: kPrimaryColor),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -148,151 +273,398 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                           ),
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrimaryColor, // Teal background
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('Get Started'),
                     ),
                   ],
                 ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Featured Recipes',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+              const SizedBox(height: 18),
+              const Text(
+                'Featured recipes',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Featured Recipe List
-            SizedBox(
-              height: 220, // Increased height to fit larger cards
-              child: _isLoadingRecipes
-                  ? ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: 5,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          margin: const EdgeInsets.only(right: 16),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Container(
-                            width: 160,
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SkeletonLoader(
-                                  width: double.infinity,
-                                  height: 120,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                const SizedBox(height: 8),
-                                SkeletonLoader(
-                                    width: double.infinity, height: 16),
-                                const SizedBox(height: 4),
-                                SkeletonLoader(width: 100, height: 12),
-                              ],
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 220,
+                child: _isLoadingRecipes
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 5,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            margin: const EdgeInsets.only(right: 16),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                        );
-                      },
-                    )
-                  : _featuredRecipes.isEmpty
-                      ? const Center(
-                          child: Text('No recipes available'),
-                        )
-                      : ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _featuredRecipes.length,
-                          itemBuilder: (context, index) {
-                            final recipe = _featuredRecipes[index];
-                            return InkWell(
-                              onTap: () => _navigateToDetail(recipe),
-                              child: Card(
-                                margin: const EdgeInsets.only(right: 16),
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Container(
-                                  width: 160, // Slightly wider card
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.network(
-                                          recipe.imageUrl,
-                                          height: 120,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return Container(
-                                              height: 120,
-                                              decoration: BoxDecoration(
+                            child: Container(
+                              width: 170,
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SkeletonLoader(
+                                    width: double.infinity,
+                                    height: 120,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SkeletonLoader(
+                                      width: double.infinity, height: 16),
+                                  const SizedBox(height: 4),
+                                  SkeletonLoader(width: 100, height: 12),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : _featuredRecipes.isEmpty
+                        ? const Center(
+                            child: Text('No recipes available'),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _featuredRecipes.length,
+                            itemBuilder: (context, index) {
+                              final recipe = _featuredRecipes[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: GestureDetector(
+                                  onTap: () => _navigateToDetail(recipe),
+                                  child: Container(
+                                    width: 190,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(18),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.06),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(18),
+                                      child: Stack(
+                                        children: [
+                                          Positioned.fill(
+                                            child: Image.network(
+                                              recipe.imageUrl,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error,
+                                                      stackTrace) =>
+                                                  Container(
                                                 color: kPrimaryColor
-                                                    .withOpacity(0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                              child: const Center(
+                                                    .withOpacity(0.08),
                                                 child: Icon(
                                                   Icons.restaurant_menu_rounded,
-                                                  size: 50,
-                                                  color: kPrimaryColor,
+                                                  color: kPrimaryColor
+                                                      .withOpacity(0.6),
+                                                  size: 40,
                                                 ),
                                               ),
-                                            );
-                                          },
+                                            ),
+                                          ),
+                                          Positioned.fill(
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [
+                                                    Colors.black
+                                                        .withOpacity(0.05),
+                                                    Colors.black
+                                                        .withOpacity(0.65),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 10,
+                                            right: 10,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black
+                                                    .withOpacity(0.55),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.favorite,
+                                                    size: 14,
+                                                    color: Colors.white,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${recipe.likesCount}',
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            left: 10,
+                                            right: 10,
+                                            bottom: 10,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  recipe.title,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.access_time,
+                                                      size: 14,
+                                                      color: Colors.white70,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      '${recipe.cookingTime} min',
+                                                      style: const TextStyle(
+                                                        color: Colors.white70,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+              ),
+              const SizedBox(height: 22),
+              const Text(
+                'Most favorite',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 210,
+                child: _isLoadingRecipes || mostFavorite.isEmpty
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _isLoadingRecipes ? 3 : 1,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            margin: const EdgeInsets.only(right: 16),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Container(
+                              width: 190,
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SkeletonLoader(
+                                    width: double.infinity,
+                                    height: 110,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SkeletonLoader(
+                                      width: double.infinity, height: 16),
+                                  const SizedBox(height: 4),
+                                  SkeletonLoader(width: 80, height: 12),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: mostFavorite.length.clamp(0, 5),
+                        itemBuilder: (context, index) {
+                          final recipe = mostFavorite[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 16),
+                            child: GestureDetector(
+                              onTap: () => _navigateToDetail(recipe),
+                              child: Container(
+                                width: 190,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 14,
+                                      offset: const Offset(0, 7),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(18),
+                                  child: Stack(
+                                    children: [
+                                      Positioned.fill(
+                                        child: Image.network(
+                                          recipe.imageUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Container(
+                                            color:
+                                                kPrimaryColor.withOpacity(0.08),
+                                            child: Icon(
+                                              Icons.favorite,
+                                              color: kPrimaryColor
+                                                  .withOpacity(0.7),
+                                              size: 40,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        recipe.title,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                          fontSize: 14,
+                                      Positioned.fill(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                Colors.black.withOpacity(0.15),
+                                                Colors.black.withOpacity(0.7),
+                                              ],
+                                            ),
+                                          ),
                                         ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        recipe.description,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
+                                      Positioned(
+                                        top: 8,
+                                        left: 8,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.white.withOpacity(0.9),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.emoji_events,
+                                                size: 14,
+                                                color: Colors.amber,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '#${index + 1}',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Positioned(
+                                        left: 10,
+                                        right: 10,
+                                        bottom: 10,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              recipe.title,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.favorite,
+                                                  size: 14,
+                                                  color: Colors.redAccent,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '${recipe.likesCount}',
+                                                  style: const TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                const Icon(
+                                                  Icons.access_time,
+                                                  size: 14,
+                                                  color: Colors.white70,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '${recipe.cookingTime} min',
+                                                  style: const TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
-                            );
-                          },
-                        ),
-            ),
-          ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
