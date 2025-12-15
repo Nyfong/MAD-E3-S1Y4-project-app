@@ -16,6 +16,8 @@ class FallbackDataService {
         authorId: 'demo-author',
         authorName: 'Demo Chef',
         authorPhotoURL: '',
+        authorBio:
+            'Demo Chef is passionate about creating delicious recipes for everyone.',
         ingredients: ['spaghetti', 'eggs', 'parmesan', 'bacon', 'black pepper'],
         instructions: [
           'Cook spaghetti according to package directions',
@@ -42,6 +44,8 @@ class FallbackDataService {
         authorId: 'demo-author',
         authorName: 'Demo Chef',
         authorPhotoURL: '',
+        authorBio:
+            'Demo Chef is passionate about creating delicious recipes for everyone.',
         ingredients: ['flour', 'butter', 'sugar', 'chocolate chips', 'vanilla'],
         instructions: [
           'Mix dry ingredients',
@@ -68,6 +72,8 @@ class FallbackDataService {
         authorId: 'demo-author',
         authorName: 'Demo Chef',
         authorPhotoURL: '',
+        authorBio:
+            'Demo Chef is passionate about creating delicious recipes for everyone.',
         ingredients: [
           'chicken breast',
           'lettuce',

@@ -155,6 +155,16 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     final cuisineController = TextEditingController(text: recipe.cuisine);
     final imageUrlController = TextEditingController(text: recipe.imageUrl);
 
+    // Keep ingredient & instruction controllers alive for the entire bottom sheet
+    final ingredientControllers = <TextEditingController>[
+      for (final ing in recipe.ingredients) TextEditingController(text: ing),
+      if (recipe.ingredients.isEmpty) TextEditingController(),
+    ];
+    final instructionControllers = <TextEditingController>[
+      for (final step in recipe.instructions) TextEditingController(text: step),
+      if (recipe.instructions.isEmpty) TextEditingController(),
+    ];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -162,17 +172,6 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        final ingredientControllers = <TextEditingController>[
-          for (final ing in recipe.ingredients)
-            TextEditingController(text: ing),
-          if (recipe.ingredients.isEmpty) TextEditingController(),
-        ];
-        final instructionControllers = <TextEditingController>[
-          for (final step in recipe.instructions)
-            TextEditingController(text: step),
-          if (recipe.instructions.isEmpty) TextEditingController(),
-        ];
-
         return FractionallySizedBox(
           heightFactor: 0.9,
           child: StatefulBuilder(
@@ -189,28 +188,40 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                   return;
                 }
 
+                final ingredients = ingredientControllers
+                    .map((c) => c.text.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                final instructions = instructionControllers
+                    .map((c) => c.text.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                // Require at least one ingredient and one instruction
+                if (ingredients.isEmpty || instructions.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Please add at least one ingredient and one instruction',
+                      ),
+                    ),
+                  );
+                  return;
+                }
                 setModalState(() => _isCreating = true);
                 try {
-                  final ingredients = ingredientControllers
-                      .map((c) => c.text.trim())
-                      .where((e) => e.isNotEmpty)
-                      .toList();
-                  final instructions = instructionControllers
-                      .map((c) => c.text.trim())
-                      .where((e) => e.isNotEmpty)
-                      .toList();
+                  final imageUrl = imageUrlController.text.trim();
                   final data = <String, dynamic>{
                     'title': title,
                     'description': desc,
-                    'ingredients': ingredients.isEmpty ? [''] : ingredients,
-                    'instructions': instructions.isEmpty ? [''] : instructions,
+                    'ingredients': ingredients,
+                    'instructions': instructions,
                     'cookingTime':
                         int.tryParse(cookingTimeController.text) ?? 0,
                     'servings': int.tryParse(servingsController.text) ?? 1,
                     'difficulty': difficultyController.text.trim(),
                     'cuisine': cuisineController.text.trim(),
                     'tags': recipe.tags,
-                    'imageUrl': imageUrlController.text.trim(),
+                    'imageUrl': imageUrl,
                   };
 
                   final updated =
@@ -469,6 +480,14 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     final cuisineController = TextEditingController(text: 'general');
     final imageUrlController = TextEditingController();
 
+    // Keep ingredient & instruction controllers alive for the entire bottom sheet
+    final ingredientControllers = <TextEditingController>[
+      TextEditingController()
+    ];
+    final instructionControllers = <TextEditingController>[
+      TextEditingController()
+    ];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -476,13 +495,6 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        final ingredientControllers = <TextEditingController>[
-          TextEditingController()
-        ];
-        final instructionControllers = <TextEditingController>[
-          TextEditingController()
-        ];
-
         return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -504,28 +516,40 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                   return;
                 }
 
+                final ingredients = ingredientControllers
+                    .map((c) => c.text.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                final instructions = instructionControllers
+                    .map((c) => c.text.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                // Require at least one ingredient and one instruction
+                if (ingredients.isEmpty || instructions.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Please add at least one ingredient and one instruction',
+                      ),
+                    ),
+                  );
+                  return;
+                }
                 setModalState(() => _isCreating = true);
                 try {
-                  final ingredients = ingredientControllers
-                      .map((c) => c.text.trim())
-                      .where((e) => e.isNotEmpty)
-                      .toList();
-                  final instructions = instructionControllers
-                      .map((c) => c.text.trim())
-                      .where((e) => e.isNotEmpty)
-                      .toList();
+                  final imageUrl = imageUrlController.text.trim();
                   final data = <String, dynamic>{
                     'title': title,
                     'description': desc,
-                    'ingredients': ingredients.isEmpty ? [''] : ingredients,
-                    'instructions': instructions.isEmpty ? [''] : instructions,
+                    'ingredients': ingredients,
+                    'instructions': instructions,
                     'cookingTime':
                         int.tryParse(cookingTimeController.text) ?? 0,
                     'servings': int.tryParse(servingsController.text) ?? 1,
                     'difficulty': difficultyController.text.trim(),
                     'cuisine': cuisineController.text.trim(),
                     'tags': <String>[],
-                    'imageUrl': imageUrlController.text.trim(),
+                    'imageUrl': imageUrl,
                   };
 
                   final created = await _recipeRepository.createRecipe(data);

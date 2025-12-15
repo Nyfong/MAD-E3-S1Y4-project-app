@@ -88,6 +88,7 @@ class RecipeRemoteDataSource {
       authorId: recipe.authorId,
       authorName: recipe.authorName,
       authorPhotoURL: recipe.authorPhotoURL,
+      authorBio: recipe.authorBio,
       ingredients: recipe.ingredients,
       instructions: recipe.instructions,
       tags: recipe.tags,

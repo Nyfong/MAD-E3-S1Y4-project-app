@@ -10,6 +10,7 @@ class Recipe {
   final String authorId;
   final String authorName;
   final String authorPhotoURL;
+  final String authorBio;
   final List<String> ingredients;
   final List<String> instructions;
   final List<String> tags;
@@ -31,6 +32,7 @@ class Recipe {
     required this.authorId,
     required this.authorName,
     required this.authorPhotoURL,
+    required this.authorBio,
     required this.ingredients,
     required this.instructions,
     required this.tags,
@@ -54,6 +56,7 @@ class Recipe {
       authorId: json['authorId'] as String,
       authorName: json['authorName'] as String,
       authorPhotoURL: json['authorPhotoURL'] as String? ?? '',
+      authorBio: json['authorBio'] as String? ?? '',
       ingredients: (json['ingredients'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),

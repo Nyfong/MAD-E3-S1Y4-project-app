@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:rupp_final_mad/data/api/api_config.dart';
 import 'package:rupp_final_mad/data/models/recipe.dart';
 import 'package:rupp_final_mad/data/repositories/recipe_repository_impl.dart';
+import 'package:rupp_final_mad/presentation/screens/author_profile_screen.dart';
 import 'package:rupp_final_mad/presentation/widgets/skeleton_loader.dart';
 
 const Color kPrimaryColor = Color(0xFF30A58B);
@@ -25,6 +27,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   void initState() {
     super.initState();
     _loadRecipe();
+  }
+
+  String? _resolveImageUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('http')) return url;
+
+    final baseUri = Uri.parse(ApiConfig.baseUrl);
+    final hostBase =
+        '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}';
+
+    if (url.startsWith('/')) {
+      return '$hostBase$url';
+    } else {
+      return '$hostBase/$url';
+    }
   }
 
   Future<void> _loadRecipe() async {
@@ -186,7 +203,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ],
                           flexibleSpace: FlexibleSpaceBar(
                             background: Image.network(
-                              _recipe!.imageUrl,
+                              _resolveImageUrl(_recipe!.imageUrl) ??
+                                  _recipe!.imageUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
@@ -421,49 +439,71 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 }),
                                 const SizedBox(height: 32),
                                 // Author Info
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 24,
-                                        backgroundImage:
-                                            _recipe!.authorPhotoURL.isNotEmpty
-                                                ? NetworkImage(
-                                                    _recipe!.authorPhotoURL)
-                                                : null,
-                                        child: _recipe!.authorPhotoURL.isEmpty
-                                            ? const Icon(Icons.person)
-                                            : null,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Author',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                            Text(
-                                              _recipe!.authorName,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    final resolvedPhoto = _resolveImageUrl(
+                                            _recipe!.authorPhotoURL) ??
+                                        _recipe!.authorPhotoURL;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AuthorProfileScreen(
+                                          authorId: _recipe!.authorId,
+                                          authorName: _recipe!.authorName,
+                                          authorPhotoUrl: resolvedPhoto,
+                                          authorBio: _recipe!.authorBio,
                                         ),
                                       ),
-                                    ],
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 24,
+                                          backgroundImage: _recipe!
+                                                  .authorPhotoURL.isNotEmpty
+                                              ? NetworkImage(_resolveImageUrl(
+                                                      _recipe!
+                                                          .authorPhotoURL) ??
+                                                  _recipe!.authorPhotoURL)
+                                              : null,
+                                          child: _recipe!.authorPhotoURL.isEmpty
+                                              ? const Icon(Icons.person)
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Author',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              Text(
+                                                _recipe!.authorName,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 32),

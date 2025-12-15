@@ -1,6 +1,7 @@
 // File: lib/widgets/profile_header.dart
 
 import 'package:flutter/material.dart';
+import 'package:rupp_final_mad/data/api/api_config.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String userName;
@@ -22,6 +23,24 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color kPrimaryColor = Color(0xFF30A58B);
 
+    // Resolve full photo URL (handles relative paths from API)
+    String? resolvedPhotoUrl;
+    if (photoUrl != null && photoUrl!.isNotEmpty) {
+      if (photoUrl!.startsWith('http')) {
+        resolvedPhotoUrl = photoUrl;
+      } else {
+        final baseUri = Uri.parse(ApiConfig.baseUrl);
+        final hostBase =
+            '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}';
+
+        if (photoUrl!.startsWith('/')) {
+          resolvedPhotoUrl = '$hostBase${photoUrl!}';
+        } else {
+          resolvedPhotoUrl = '$hostBase/${photoUrl!}';
+        }
+      }
+    }
+
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -39,10 +58,10 @@ class ProfileHeader extends StatelessWidget {
           CircleAvatar(
             radius: 38,
             backgroundColor: Colors.white.withOpacity(0.12),
-            backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
-                ? NetworkImage(photoUrl!)
+            backgroundImage: resolvedPhotoUrl != null
+                ? NetworkImage(resolvedPhotoUrl)
                 : null,
-            child: photoUrl == null || photoUrl!.isEmpty
+            child: resolvedPhotoUrl == null
                 ? const Icon(
                     Icons.person_rounded,
                     size: 40,
