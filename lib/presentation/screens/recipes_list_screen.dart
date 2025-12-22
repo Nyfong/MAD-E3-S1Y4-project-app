@@ -8,7 +8,8 @@ import 'package:rupp_final_mad/presentation/widgets/recipe_grid_skeleton.dart';
 const Color kPrimaryColor = Color(0xFF30A58B);
 
 class RecipesListScreen extends StatefulWidget {
-  const RecipesListScreen({super.key});
+  final String? category;
+  const RecipesListScreen({super.key, this.category});
 
   @override
   State<RecipesListScreen> createState() => _RecipesListScreenState();
@@ -24,7 +25,7 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
   int _currentPage = 1;
   final int _limit = 20;
   bool _hasMore = true;
-  String _searchQuery = ''; // Search query for filtering recipes
+  String _searchQuery = ''; 
 
   @override
   void initState() {
@@ -49,12 +50,21 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
     });
   }
 
-  // Filter recipes based on search query
   List<Recipe> _getFilteredRecipes() {
-    if (_searchQuery.isEmpty) {
-      return _recipes;
+    List<Recipe> filtered = _recipes;
+    
+    // Filter by category if provided
+    if (widget.category != null && widget.category!.isNotEmpty) {
+      filtered = filtered.where((recipe) => 
+        recipe.tags.any((tag) => tag.toLowerCase() == widget.category!.toLowerCase()) ||
+        recipe.cuisine.toLowerCase() == widget.category!.toLowerCase()
+      ).toList();
     }
-    return _recipes
+
+    if (_searchQuery.isEmpty) {
+      return filtered;
+    }
+    return filtered
         .where((recipe) => recipe.title.toLowerCase().contains(_searchQuery))
         .toList();
   }
@@ -115,33 +125,30 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
     );
   }
 
-  // Responsive grid configuration
   int _getCrossAxisCount(double width) {
-    // Always use a single column to show one card per row
-    return 1;
+    return 2; // Two cards per line as requested
   }
 
   double _getChildAspectRatio(double width) {
-    // Make cards tall enough (1 column, Instagram-style layout)
-    // aspectRatio = width / height  -> smaller value = more height
-    if (width > 900) {
-      return 0.7;
-    } else if (width > 600) {
-      return 0.75;
-    } else {
-      return 0.8;
-    }
+    // Square-ish aspect ratio for the cards in 2-column layout
+    return 0.85; 
   }
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.category ?? 'All Recipes';
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F9),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         toolbarHeight: 72,
-        titleSpacing: 16,
+        titleSpacing: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Row(
           children: [
             Container(
@@ -151,15 +158,16 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.menu_book_rounded,
+                Icons.restaurant_menu,
                 color: kPrimaryColor,
+                size: 20,
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'All Recipes',
-              style: TextStyle(
-                fontSize: 22,
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: Colors.black87,
               ),
@@ -169,75 +177,54 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Browse and discover recipes from the community.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search in $title...',
+                  prefixIcon: const Icon(Icons.search, color: kPrimaryColor),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                  suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged();
+                        },
+                      )
+                    : null,
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 12),
-                      const Icon(Icons.search, color: kPrimaryColor),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText: 'Search by recipe name...',
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                      if (_searchQuery.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _onSearchChanged();
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final screenWidth = constraints.maxWidth;
                 final crossAxisCount = _getCrossAxisCount(screenWidth);
                 final childAspectRatio = _getChildAspectRatio(screenWidth);
+                const spacing = 12.0;
+                const horizontalPadding = 16.0;
 
-                // Responsive padding
-                final horizontalPadding = screenWidth > 600 ? 16.0 : 12.0;
-                final spacing = screenWidth > 600 ? 16.0 : 12.0;
+                final filteredRecipes = _getFilteredRecipes();
 
                 return _isLoading && _recipes.isEmpty
                     ? GridView.builder(
-                        padding: EdgeInsets.all(horizontalPadding),
+                        padding: const EdgeInsets.all(horizontalPadding),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
                           crossAxisSpacing: spacing,
@@ -250,93 +237,27 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                       )
                     : _errorMessage.isNotEmpty && _recipes.isEmpty
                         ? Center(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(24.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    size: 80,
-                                    color: Colors.red.withOpacity(0.5),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 32),
-                                    child: Text(
-                                      _errorMessage,
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 16,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal:
-                                            screenWidth > 600 ? 200 : 32,
-                                      ),
-                                      child: ElevatedButton(
-                                        onPressed: () => _loadRecipes(),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 16,
-                                          ),
-                                          backgroundColor: kPrimaryColor,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Retry',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  Icon(Icons.error_outline, size: 60, color: Colors.red.withOpacity(0.5)),
+                                  const SizedBox(height: 16),
+                                  Text(_errorMessage, textAlign: TextAlign.center),
+                                  TextButton(onPressed: () => _loadRecipes(), child: const Text('Retry')),
                                 ],
                               ),
                             ),
                           )
-                        : _getFilteredRecipes().isEmpty &&
-                                _searchQuery.isNotEmpty
+                        : filteredRecipes.isEmpty
                             ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.search_off,
-                                      size: 80,
-                                      color: kPrimaryColor.withOpacity(0.5),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    const Text(
-                                      'No recipes found',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Try searching with a different name',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 16,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
+                                    Icon(Icons.search_off, size: 80, color: kPrimaryColor.withOpacity(0.3)),
+                                    const SizedBox(height: 16),
+                                    const Text('No recipes found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               )
@@ -350,34 +271,20 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                                 },
                                 child: GridView.builder(
                                   controller: _scrollController,
-                                  padding: EdgeInsets.all(horizontalPadding),
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                  padding: const EdgeInsets.all(horizontalPadding),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: crossAxisCount,
                                     crossAxisSpacing: spacing,
                                     mainAxisSpacing: spacing,
                                     childAspectRatio: childAspectRatio,
                                   ),
-                                  itemCount: _getFilteredRecipes().length +
-                                      (_hasMore && _searchQuery.isEmpty
-                                          ? 1
-                                          : 0),
+                                  itemCount: filteredRecipes.length + (_hasMore && _searchQuery.isEmpty ? 1 : 0),
                                   itemBuilder: (context, index) {
-                                    if (index == _getFilteredRecipes().length) {
-                                      return _hasMore
-                                          ? const Center(
-                                              child: Padding(
-                                                padding: EdgeInsets.all(16.0),
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  color: kPrimaryColor,
-                                                ),
-                                              ),
-                                            )
-                                          : const SizedBox.shrink();
+                                    if (index == filteredRecipes.length) {
+                                      return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator(color: kPrimaryColor)));
                                     }
 
-                                    final recipe = _getFilteredRecipes()[index];
+                                    final recipe = filteredRecipes[index];
                                     return RecipeGridCard(
                                       recipe: recipe,
                                       onTap: () => _navigateToDetail(recipe),

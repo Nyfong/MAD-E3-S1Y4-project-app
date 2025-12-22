@@ -7,11 +7,19 @@ const Color kPrimaryColor = Color(0xFF30A58B);
 class ExploreScreen extends StatelessWidget {
   const ExploreScreen({super.key});
 
+  void _navigateToRecipes(BuildContext context, {String? category}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipesListScreen(category: category),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // Page title
         title: const Text(
           'Explore Recipes',
           style: TextStyle(
@@ -57,14 +65,7 @@ class ExploreScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RecipesListScreen(),
-                    ),
-                  );
-                },
+                onPressed: () => _navigateToRecipes(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
                   foregroundColor: Colors.white,
@@ -98,17 +99,41 @@ class ExploreScreen extends StatelessWidget {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.25,
-              children: const [
-                CategoryCard(title: 'Breakfast', icon: Icons.breakfast_dining),
-                CategoryCard(title: 'Lunch', icon: Icons.lunch_dining),
-                CategoryCard(title: 'Dinner', icon: Icons.dinner_dining),
-                CategoryCard(title: 'Dessert', icon: Icons.cake),
-                CategoryCard(title: 'Snacks', icon: Icons.cookie),
-                CategoryCard(title: 'Beverages', icon: Icons.local_cafe),
+              crossAxisCount: 3, // Changed to 3 per row for smaller cards
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.9,
+              children: [
+                CategoryCard(
+                  title: 'Asian',
+                  emoji: '🥣',
+                  onTap: () => _navigateToRecipes(context, category: 'Asian'),
+                ),
+                CategoryCard(
+                  title: 'Fast food',
+                  emoji: '🍔',
+                  onTap: () => _navigateToRecipes(context, category: 'Fast food'),
+                ),
+                CategoryCard(
+                  title: 'Dessert',
+                  emoji: '🍰',
+                  onTap: () => _navigateToRecipes(context, category: 'Dessert'),
+                ),
+                CategoryCard(
+                  title: 'Drink',
+                  emoji: '🍹',
+                  onTap: () => _navigateToRecipes(context, category: 'Drink'),
+                ),
+                CategoryCard(
+                  title: 'Salad',
+                  emoji: '🥗',
+                  onTap: () => _navigateToRecipes(context, category: 'Meatless'),
+                ),
+                CategoryCard(
+                  title: 'Soups',
+                  emoji: '🍲',
+                  onTap: () => _navigateToRecipes(context, category: 'Soups'),
+                ),
               ],
             ),
           ],

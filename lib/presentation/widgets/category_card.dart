@@ -1,53 +1,53 @@
-// File: lib/widgets/category_card.dart
-
 import 'package:flutter/material.dart';
-
-// Color definitions (Ensure these are defined here, in a theme file, or imported)
-const Color kPrimaryColor = Color(0xFF30A58B); // Teal/Sea Green
 
 class CategoryCard extends StatelessWidget {
   final String title;
-  final IconData icon;
+  final String emoji;
   final VoidCallback? onTap;
 
   const CategoryCard({
     super.key,
     required this.title,
-    required this.icon,
+    required this.emoji,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      // Consistent, large rounded corners (15)
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      // Increased elevation and shadow for depth, using branded color
-      elevation: 6,
-      shadowColor: kPrimaryColor.withOpacity(0.3),
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Branded icon color
-              Icon(icon, size: 48, color: kPrimaryColor),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 2D Emoji Icon
+            Text(
+              emoji,
+              style: const TextStyle(fontSize: 40),
+            ),
+            const SizedBox(height: 12),
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                letterSpacing: 0.2,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

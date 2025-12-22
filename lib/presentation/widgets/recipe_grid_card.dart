@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:rupp_final_mad/data/models/recipe.dart';
 import 'package:rupp_final_mad/data/api/api_config.dart';
 
-const Color kPrimaryColor = Color(0xFF30A58B);
-
 class RecipeGridCard extends StatelessWidget {
   final Recipe recipe;
   final VoidCallback onTap;
@@ -38,151 +36,136 @@ class RecipeGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLargeScreen = screenWidth > 900;
-
     final mainImageUrl = _resolveImageUrl(recipe.imageUrl);
-    final authorPhoto = recipe.authorPhotoURL.isNotEmpty
-        ? _resolveImageUrl(recipe.authorPhotoURL)
-        : null;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top bar: author row (Instagram-style)
-            Padding(
-              padding: EdgeInsets.all(isLargeScreen ? 12.0 : 10.0),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: isLargeScreen ? 14 : 13,
-                    backgroundColor: kPrimaryColor.withOpacity(0.15),
-                    backgroundImage:
-                        authorPhoto != null ? NetworkImage(authorPhoto) : null,
-                    child: authorPhoto == null
-                        ? Icon(
-                            Icons.person,
-                            size: isLargeScreen ? 16 : 15,
-                            color: kPrimaryColor,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      recipe.authorName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: isLargeScreen ? 13 : 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
-            // Main image (takes remaining height)
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (mainImageUrl.isNotEmpty)
-                    Image.network(
-                      mainImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: kPrimaryColor.withOpacity(0.1),
-                          child: const Icon(
-                            Icons.restaurant_menu,
-                            size: 40,
-                            color: kPrimaryColor,
-                          ),
-                        );
-                      },
-                    )
-                  else
-                    Container(
-                      color: kPrimaryColor.withOpacity(0.1),
-                      child: const Icon(
-                        Icons.restaurant_menu,
-                        size: 40,
-                        color: kPrimaryColor,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            // Bottom: title + stats row (likes, time)
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                isLargeScreen ? 12.0 : 10.0,
-                isLargeScreen ? 8.0 : 6.0,
-                isLargeScreen ? 12.0 : 10.0,
-                isLargeScreen ? 10.0 : 8.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    recipe.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: isLargeScreen ? 14 : 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background Image
+              if (mainImageUrl.isNotEmpty)
+                Image.network(
+                  mainImageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.restaurant, size: 40, color: Colors.white),
                   ),
-                  SizedBox(height: isLargeScreen ? 6 : 4),
-                  Row(
+                )
+              else
+                Container(
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.restaurant, size: 40, color: Colors.white),
+                ),
+
+              // Gradient Overlay for readability
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.3),
+                      Colors.transparent,
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.7),
+                    ],
+                    stops: const [0.0, 0.3, 0.6, 1.0],
+                  ),
+                ),
+              ),
+
+              // Top Right: Like Count
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.favorite_border,
-                        size: isLargeScreen ? 15 : 14,
-                        color: Colors.redAccent,
-                      ),
+                      const Icon(Icons.favorite, color: Colors.white, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         _formatCount(recipe.likesCount),
-                        style: TextStyle(
-                          fontSize: isLargeScreen ? 12 : 11,
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Icon(
-                        Icons.access_time,
-                        size: isLargeScreen ? 15 : 14,
-                        color: Colors.grey.shade600,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${recipe.cookingTime} min',
-                        style: TextStyle(
-                          fontSize: isLargeScreen ? 12 : 11,
-                          color: Colors.grey.shade700,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+
+              // Bottom Content: Title and Time
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      recipe.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 4,
+                            color: Colors.black54,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.access_time,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${recipe.cookingTime} min',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

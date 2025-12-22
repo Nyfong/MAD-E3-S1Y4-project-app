@@ -28,6 +28,15 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
   bool _isCreating = false;
   _RecipeViewFilter _viewFilter = _RecipeViewFilter.all;
 
+  final List<Map<String, String>> _availableCategories = [
+    {'name': 'Asian', 'emoji': '🥣'},
+    {'name': 'Fast food', 'emoji': '🍔'},
+    {'name': 'Dessert', 'emoji': '🍰'},
+    {'name': 'Drink', 'emoji': '🍹'},
+    {'name': 'Meatless', 'emoji': '🥗'},
+    {'name': 'Soups', 'emoji': '🍲'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -154,6 +163,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     final difficultyController = TextEditingController(text: recipe.difficulty);
     final cuisineController = TextEditingController(text: recipe.cuisine);
     final imageUrlController = TextEditingController(text: recipe.imageUrl);
+    List<String> selectedTags = List.from(recipe.tags);
 
     // Keep ingredient & instruction controllers alive for the entire bottom sheet
     final ingredientControllers = <TextEditingController>[
@@ -220,7 +230,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                     'servings': int.tryParse(servingsController.text) ?? 1,
                     'difficulty': difficultyController.text.trim(),
                     'cuisine': cuisineController.text.trim(),
-                    'tags': recipe.tags,
+                    'tags': selectedTags,
                     'imageUrl': imageUrl,
                   };
 
@@ -293,7 +303,37 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                           icon: Icons.title, required: true),
                       _buildTextField(descriptionController, 'Description',
                           icon: Icons.description, maxLines: 2, required: true),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Categories (Select multiple)',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: _availableCategories.map((category) {
+                          final categoryName = category['name']!;
+                          final emoji = category['emoji']!;
+                          final isSelected = selectedTags.contains(categoryName);
+                          return FilterChip(
+                            label: Text('$emoji $categoryName'),
+                            selected: isSelected,
+                            selectedColor: kPrimaryColor.withOpacity(0.2),
+                            checkmarkColor: kPrimaryColor,
+                            onSelected: (bool selected) {
+                              setModalState(() {
+                                if (selected) {
+                                  selectedTags.add(categoryName);
+                                } else {
+                                  selectedTags.remove(categoryName);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 12),
                       const Text(
                         'Ingredients',
                         style: TextStyle(
@@ -479,6 +519,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     final difficultyController = TextEditingController(text: 'easy');
     final cuisineController = TextEditingController(text: 'general');
     final imageUrlController = TextEditingController();
+    List<String> selectedTags = [];
 
     // Keep ingredient & instruction controllers alive for the entire bottom sheet
     final ingredientControllers = <TextEditingController>[
@@ -548,7 +589,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                     'servings': int.tryParse(servingsController.text) ?? 1,
                     'difficulty': difficultyController.text.trim(),
                     'cuisine': cuisineController.text.trim(),
-                    'tags': <String>[],
+                    'tags': selectedTags,
                     'imageUrl': imageUrl,
                   };
 
@@ -604,7 +645,37 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                         icon: Icons.title, required: true),
                     _buildTextField(descriptionController, 'Description',
                         icon: Icons.description, maxLines: 2, required: true),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Categories (Select multiple)',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: _availableCategories.map((category) {
+                        final categoryName = category['name']!;
+                        final emoji = category['emoji']!;
+                        final isSelected = selectedTags.contains(categoryName);
+                        return FilterChip(
+                          label: Text('$emoji $categoryName'),
+                          selected: isSelected,
+                          selectedColor: kPrimaryColor.withOpacity(0.2),
+                          checkmarkColor: kPrimaryColor,
+                          onSelected: (bool selected) {
+                            setModalState(() {
+                              if (selected) {
+                                selectedTags.add(categoryName);
+                              } else {
+                                selectedTags.remove(categoryName);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 12),
                     const Text(
                       'Ingredients',
                       style:

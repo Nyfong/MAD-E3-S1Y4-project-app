@@ -6,50 +6,44 @@ class RecipeGridSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Image skeleton
-          Expanded(
-            flex: 3,
+          // Background Skeleton
+          const SkeletonLoader(
+            width: double.infinity,
+            height: double.infinity,
+            borderRadius: BorderRadius.all(Radius.circular(24)),
+          ),
+          
+          // Badge Skeleton
+          Positioned(
+            top: 12,
+            right: 12,
             child: SkeletonLoader(
-              width: double.infinity,
-              height: double.infinity,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
+              width: 50,
+              height: 24,
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
-          // Content skeleton
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SkeletonLoader(width: double.infinity, height: 14),
-                  const SizedBox(height: 4),
-                  Flexible(
-                    child: SkeletonLoader(width: double.infinity, height: 11),
-                  ),
-                  const SizedBox(height: 4),
-                  SkeletonLoader(width: 80, height: 11),
-                  const Spacer(),
-                  Wrap(
-                    spacing: 4,
-                    children: [
-                      SkeletonLoader(width: 40, height: 16),
-                      SkeletonLoader(width: 50, height: 16),
-                    ],
-                  ),
-                ],
-              ),
+
+          // Bottom Content Skeleton
+          Positioned(
+            bottom: 16,
+            left: 16,
+            right: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SkeletonLoader(width: double.infinity, height: 18),
+                const SizedBox(height: 8),
+                const SkeletonLoader(width: 80, height: 14),
+              ],
             ),
           ),
         ],
