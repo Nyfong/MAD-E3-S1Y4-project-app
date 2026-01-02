@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/category_card.dart';
 import 'recipes_list_screen.dart';
+import 'category_recipes_screen.dart';
 
 const Color kPrimaryColor = Color(0xFF30A58B);
 
@@ -53,31 +54,71 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // View All Recipes Button
-            SizedBox(
+            // Modern View All Recipes Button
+            Container(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RecipesListScreen(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [kPrimaryColor, kPrimaryColor.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: const Text(
-                  'View All Recipes',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: kPrimaryColor.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RecipesListScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.restaurant_menu_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'View All Recipes',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -94,7 +135,7 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Grid of category cards
+            // Grid of category cards - Only 3 categories
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -102,13 +143,52 @@ class ExploreScreen extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               childAspectRatio: 1.25,
-              children: const [
-                CategoryCard(title: 'Breakfast', icon: Icons.breakfast_dining),
-                CategoryCard(title: 'Lunch', icon: Icons.lunch_dining),
-                CategoryCard(title: 'Dinner', icon: Icons.dinner_dining),
-                CategoryCard(title: 'Dessert', icon: Icons.cake),
-                CategoryCard(title: 'Snacks', icon: Icons.cookie),
-                CategoryCard(title: 'Beverages', icon: Icons.local_cafe),
+              children: [
+                CategoryCard(
+                  title: 'Minute',
+                  icon: Icons.timer_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryRecipesScreen(
+                          category: 'minute',
+                          title: 'Quick Recipes',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                CategoryCard(
+                  title: 'Level',
+                  icon: Icons.trending_up_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryRecipesScreen(
+                          category: 'level',
+                          title: 'By Difficulty',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                CategoryCard(
+                  title: 'Love',
+                  icon: Icons.favorite_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryRecipesScreen(
+                          category: 'love',
+                          title: 'Liked Recipes',
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ],

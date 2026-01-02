@@ -28,18 +28,22 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isGoogleLoading = false;
   bool _isPhoneLoading = false;
+  AuthProvider? _authProvider;
 
   @override
-  void initState() {
-    super.initState();
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    authProvider.addListener(_onAuthStateChanged);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Store reference to auth provider when dependencies are available
+    if (_authProvider == null) {
+      _authProvider = Provider.of<AuthProvider>(context, listen: false);
+      _authProvider?.addListener(_onAuthStateChanged);
+    }
   }
 
   @override
   void dispose() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    authProvider.removeListener(_onAuthStateChanged);
+    // Use stored reference instead of accessing context
+    _authProvider?.removeListener(_onAuthStateChanged);
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

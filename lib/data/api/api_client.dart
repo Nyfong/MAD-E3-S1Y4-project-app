@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:rupp_final_mad/data/api/api_config.dart';
 import 'package:rupp_final_mad/data/services/token_storage_service.dart';
 
@@ -66,9 +68,9 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> post(
+  Future<dynamic> post(
     String endpoint, {
-    Map<String, dynamic>? data,
+    dynamic data,
     Map<String, String>? headers,
   }) async {
     // If baseUrl is empty, throw to trigger fallback
@@ -142,7 +144,102 @@ class ApiClient {
     }
   }
 
-  Map<String, dynamic> _handleResponse(http.Response response) {
+  Future<Map<String, dynamic>> postMultipart(
+    String endpoint, {
+    required List<File> files,
+    String fieldName = 'images',
+    Map<String, String>? additionalFields,
+    Map<String, String>? headers,
+  }) async {
+    // If baseUrl is empty, throw to trigger fallback
+    if (baseUrl.isEmpty) {
+      throw Exception('API is disabled - using fallback data');
+    }
+
+    try {
+      final url = Uri.parse('$baseUrl$endpoint');
+      
+      // Create multipart request
+      final request = http.MultipartRequest('POST', url);
+      
+      // Add authorization header if token exists
+      final authHeader = await _tokenStorage.getAuthorizationHeader();
+      if (authHeader != null) {
+        request.headers['Authorization'] = authHeader;
+      }
+      
+      // Add any additional headers (excluding Content-Type which is set automatically)
+      if (headers != null) {
+        headers.forEach((key, value) {
+          if (key.toLowerCase() != 'content-type') {
+            request.headers[key] = value;
+          }
+        });
+      }
+      
+      // Add files to the request
+      // Use the same field name for all files - the API will receive them as an array
+      for (final file in files) {
+        final fileStream = http.ByteStream(file.openRead());
+        final fileLength = await file.length();
+        final filename = file.path.split('/').last;
+        
+        // Get MIME type from file extension
+        final contentType = _getContentTypeFromFile(file);
+        
+        final multipartFile = http.MultipartFile(
+          fieldName,
+          fileStream,
+          fileLength,
+          filename: filename,
+          contentType: contentType,
+        );
+        request.files.add(multipartFile);
+      }
+      
+      // Add additional fields if provided
+      if (additionalFields != null) {
+        request.fields.addAll(additionalFields);
+      }
+      
+      debugPrint('API Multipart POST Request: $url');
+      debugPrint('Uploading ${files.length} file(s)');
+      
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      debugPrint('API Response status: ${response.statusCode}');
+      debugPrint('API Response body: ${response.body}');
+      
+      return _handleResponse(response);
+    } catch (e, stackTrace) {
+      debugPrint('API Multipart POST error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      throw Exception('Multipart POST request failed: $e');
+    }
+  }
+
+  /// Get content type (MIME type) from file extension
+  MediaType? _getContentTypeFromFile(File file) {
+    final extension = file.path.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return MediaType('image', 'jpeg');
+      case 'png':
+        return MediaType('image', 'png');
+      case 'gif':
+        return MediaType('image', 'gif');
+      case 'webp':
+        return MediaType('image', 'webp');
+      default:
+        // Default to jpeg if unknown
+        return MediaType('image', 'jpeg');
+    }
+  }
+
+  dynamic _handleResponse(http.Response response) {
     debugPrint('Handling response with status: ${response.statusCode}');
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) {
@@ -150,7 +247,7 @@ class ApiClient {
         return {};
       }
       try {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded = jsonDecode(response.body);
         debugPrint('Response decoded successfully');
         return decoded;
       } catch (e) {

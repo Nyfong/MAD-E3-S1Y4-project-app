@@ -7,57 +7,44 @@ import 'package:rupp_final_mad/presentation/widgets/recipe_grid_skeleton.dart';
 
 const Color kPrimaryColor = Color(0xFF30A58B);
 
-class RecipesListScreen extends StatefulWidget {
-  const RecipesListScreen({super.key});
+class CategoryRecipesScreen extends StatefulWidget {
+  final String category; // 'minute', 'level', or 'love'
+  final String title;
+
+  const CategoryRecipesScreen({
+    super.key,
+    required this.category,
+    required this.title,
+  });
 
   @override
-  State<RecipesListScreen> createState() => _RecipesListScreenState();
+  State<CategoryRecipesScreen> createState() => _CategoryRecipesScreenState();
 }
 
-class _RecipesListScreenState extends State<RecipesListScreen> {
+class _CategoryRecipesScreenState extends State<CategoryRecipesScreen> {
   final RecipeRepositoryImpl _recipeRepository = RecipeRepositoryImpl();
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _searchController = TextEditingController();
-  List<Recipe> _recipes = [];
+  List<Recipe> _allRecipes = [];
+  List<Recipe> _filteredRecipes = [];
   bool _isLoading = true;
   bool _isLoadingMore = false; // Separate flag for loading more
   String _errorMessage = '';
   int _currentPage = 1;
   final int _limit = 10; // Reduced to 10 for better performance
   bool _hasMore = true;
-  String _searchQuery = ''; // Search query for filtering recipes
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _loadRecipes();
-    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
-    _searchController.removeListener(_onSearchChanged);
     _scrollController.dispose();
-    _searchController.dispose();
     super.dispose();
-  }
-
-  void _onSearchChanged() {
-    setState(() {
-      _searchQuery = _searchController.text.toLowerCase();
-    });
-  }
-
-  // Filter recipes based on search query
-  List<Recipe> _getFilteredRecipes() {
-    if (_searchQuery.isEmpty) {
-      return _recipes;
-    }
-    return _recipes
-        .where((recipe) => recipe.title.toLowerCase().contains(_searchQuery))
-        .toList();
   }
 
   void _onScroll() {
@@ -67,6 +54,30 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
         _scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
       _loadMore();
+    }
+  }
+
+  List<Recipe> _applyFilter(List<Recipe> recipes) {
+    switch (widget.category) {
+      case 'minute':
+        // Show recipes with cooking time <= 30 minutes (quick recipes)
+        return recipes.where((recipe) => recipe.cookingTime <= 30).toList();
+      case 'level':
+        // Show recipes grouped by difficulty level
+        // Sort by difficulty: Easy, Medium, Hard
+        final sorted = List<Recipe>.from(recipes);
+        sorted.sort((a, b) {
+          final order = {'Easy': 1, 'Medium': 2, 'Hard': 3, 'easy': 1, 'medium': 2, 'hard': 3};
+          final aOrder = order[a.difficulty.toLowerCase()] ?? 4;
+          final bOrder = order[b.difficulty.toLowerCase()] ?? 4;
+          return aOrder.compareTo(bOrder);
+        });
+        return sorted;
+      case 'love':
+        // Show only recipes with likesCount > 0 (recipes that have been liked)
+        return recipes.where((recipe) => recipe.likesCount > 0).toList();
+      default:
+        return recipes;
     }
   }
 
@@ -90,10 +101,11 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
 
       setState(() {
         if (loadMore) {
-          _recipes.addAll(recipes);
+          _allRecipes.addAll(recipes);
         } else {
-          _recipes = recipes;
+          _allRecipes = recipes;
         }
+        _filteredRecipes = _applyFilter(_allRecipes);
         _hasMore = recipes.length == _limit;
         _isLoading = false;
         _isLoadingMore = false;
@@ -125,21 +137,43 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
     );
   }
 
-  // Responsive grid configuration
   int _getCrossAxisCount(double width) {
-    // Always use a single column to show one card per row
     return 1;
   }
 
   double _getChildAspectRatio(double width) {
-    // Make cards tall enough (1 column, Instagram-style layout)
-    // aspectRatio = width / height  -> smaller value = more height
     if (width > 900) {
       return 0.7;
     } else if (width > 600) {
       return 0.75;
     } else {
       return 0.8;
+    }
+  }
+
+  IconData _getCategoryIcon() {
+    switch (widget.category) {
+      case 'minute':
+        return Icons.timer_rounded;
+      case 'level':
+        return Icons.trending_up_rounded;
+      case 'love':
+        return Icons.favorite_rounded;
+      default:
+        return Icons.restaurant_menu_rounded;
+    }
+  }
+
+  String _getCategoryDescription() {
+    switch (widget.category) {
+      case 'minute':
+        return 'Quick recipes ready in 30 minutes or less';
+      case 'level':
+        return 'Recipes organized by difficulty level';
+      case 'love':
+        return 'Popular recipes with likes from the community';
+      default:
+        return 'Browse recipes';
     }
   }
 
@@ -160,15 +194,15 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                 color: kPrimaryColor.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.menu_book_rounded,
+              child: Icon(
+                _getCategoryIcon(),
                 color: kPrimaryColor,
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'All Recipes',
-              style: TextStyle(
+            Text(
+              widget.title,
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: Colors.black87,
@@ -182,73 +216,29 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Browse and discover recipes from the community.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 12),
-                      const Icon(Icons.search, color: kPrimaryColor),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText: 'Search by recipe name...',
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                      if (_searchQuery.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _onSearchChanged();
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-              ],
+            child: Text(
+              _getCategoryDescription(),
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final screenWidth = constraints.maxWidth;
                 final crossAxisCount = _getCrossAxisCount(screenWidth);
                 final childAspectRatio = _getChildAspectRatio(screenWidth);
-
-                // Responsive padding
                 final horizontalPadding = screenWidth > 600 ? 16.0 : 12.0;
                 final spacing = screenWidth > 600 ? 16.0 : 12.0;
 
-                return _isLoading && _recipes.isEmpty
+                return _isLoading && _filteredRecipes.isEmpty
                     ? GridView.builder(
                         padding: EdgeInsets.all(horizontalPadding),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
                           crossAxisSpacing: spacing,
                           mainAxisSpacing: spacing,
@@ -258,7 +248,8 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                         itemBuilder: (context, index) =>
                             const RecipeGridSkeleton(),
                       )
-                    : _errorMessage.isNotEmpty && _recipes.isEmpty
+                    : _errorMessage.isNotEmpty &&
+                            _filteredRecipes.isEmpty
                         ? Center(
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.all(24.0),
@@ -288,8 +279,7 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                                     width: double.infinity,
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal:
-                                            screenWidth > 600 ? 200 : 32,
+                                        horizontal: screenWidth > 600 ? 200 : 32,
                                       ),
                                       child: ElevatedButton(
                                         onPressed: () => _loadRecipes(),
@@ -318,21 +308,24 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                               ),
                             ),
                           )
-                        : _getFilteredRecipes().isEmpty &&
-                                _searchQuery.isNotEmpty
+                        : _filteredRecipes.isEmpty
                             ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.search_off,
+                                      widget.category == 'love'
+                                          ? Icons.favorite_border_rounded
+                                          : Icons.search_off,
                                       size: 80,
                                       color: kPrimaryColor.withOpacity(0.5),
                                     ),
                                     const SizedBox(height: 24),
-                                    const Text(
-                                      'No recipes found',
-                                      style: TextStyle(
+                                    Text(
+                                      widget.category == 'love'
+                                          ? 'No popular recipes yet'
+                                          : 'No recipes found',
+                                      style: const TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.black54,
@@ -340,7 +333,9 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Try searching with a different name',
+                                      widget.category == 'love'
+                                          ? 'Recipes with likes will appear here'
+                                          : 'Try again later',
                                       style: TextStyle(
                                         color: Colors.grey.shade500,
                                         fontSize: 16,
@@ -354,7 +349,8 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                                 onRefresh: () async {
                                   setState(() {
                                     _currentPage = 1;
-                                    _recipes = [];
+                                    _allRecipes = [];
+                                    _filteredRecipes = [];
                                   });
                                   await _loadRecipes();
                                 },
@@ -368,12 +364,10 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                                     mainAxisSpacing: spacing,
                                     childAspectRatio: childAspectRatio,
                                   ),
-                                  itemCount: _getFilteredRecipes().length +
-                                      (_hasMore && _searchQuery.isEmpty && _isLoadingMore
-                                          ? 1
-                                          : 0),
+                                  itemCount: _filteredRecipes.length +
+                                      (_hasMore && _isLoadingMore ? 1 : 0),
                                   itemBuilder: (context, index) {
-                                    if (index == _getFilteredRecipes().length) {
+                                    if (index == _filteredRecipes.length) {
                                       return _isLoadingMore
                                           ? const Center(
                                               child: Padding(
@@ -387,7 +381,7 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
                                           : const SizedBox.shrink();
                                     }
 
-                                    final recipe = _getFilteredRecipes()[index];
+                                    final recipe = _filteredRecipes[index];
                                     return RecipeGridCard(
                                       recipe: recipe,
                                       onTap: () => _navigateToDetail(recipe),
@@ -403,3 +397,4 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
     );
   }
 }
+

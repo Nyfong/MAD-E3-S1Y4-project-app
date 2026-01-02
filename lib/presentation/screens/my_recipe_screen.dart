@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:rupp_final_mad/data/models/recipe.dart';
 import 'package:rupp_final_mad/data/repositories/recipe_repository_impl.dart';
 import 'package:rupp_final_mad/presentation/screens/recipe_detail_screen.dart';
@@ -67,10 +70,32 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     });
 
     try {
+      // Load user recipes for "All" tab
       final recipes = await _recipeRepository.getUserRecipes();
+      
+      // Load all recipes to filter favorites (bookmarked recipes)
+      // Load first few pages to get bookmarked recipes (optimized for performance)
+      List<Recipe> allRecipes = [];
+      int page = 1;
+      bool hasMore = true;
+      const maxPages = 5; // Load up to 5 pages (50 recipes) for favorites
+      
+      while (hasMore && page <= maxPages) {
+        try {
+          final pageRecipes = await _recipeRepository.getRecipes(page: page, limit: 10);
+          allRecipes.addAll(pageRecipes);
+          hasMore = pageRecipes.length == 10;
+          page++;
+        } catch (e) {
+          debugPrint('Error loading favorites page $page: $e');
+          break;
+        }
+      }
+      
       setState(() {
         _recipes = recipes;
-        _favoriteRecipes = recipes.where((r) => r.isBookmarked).toList();
+        // Filter favorites from all recipes where isBookmarked == true
+        _favoriteRecipes = allRecipes.where((r) => r.isBookmarked).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -478,7 +503,6 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     final servingsController = TextEditingController(text: '1');
     final difficultyController = TextEditingController(text: 'easy');
     final cuisineController = TextEditingController(text: 'general');
-    final imageUrlController = TextEditingController();
 
     // Keep ingredient & instruction controllers alive for the entire bottom sheet
     final ingredientControllers = <TextEditingController>[
@@ -487,6 +511,13 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     final instructionControllers = <TextEditingController>[
       TextEditingController()
     ];
+
+    // Create state variables outside builder to persist across rebuilds
+    final selectedImages = <File>[];
+    bool isUploadingImages = false;
+    
+    // Store parent context for showing snackbar after modal closes
+    final parentContext = context;
 
     showModalBottomSheet(
       context: context,
@@ -504,8 +535,59 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
           ),
           child: StatefulBuilder(
             builder: (context, setModalState) {
+
+              Future<void> pickImages() async {
+                try {
+                  debugPrint('Opening image picker...');
+                  final ImagePicker picker = ImagePicker();
+                  
+                  // Try to pick images - this will request permissions automatically on Android 13+
+                  final List<XFile>? pickedFiles = await picker.pickMultiImage(
+                    imageQuality: 85, // Compress images to reduce upload size
+                  );
+                  
+                  if (pickedFiles != null && pickedFiles.isNotEmpty) {
+                    debugPrint('Picked ${pickedFiles.length} images');
+                    selectedImages.clear();
+                    selectedImages.addAll(
+                      pickedFiles.map((xFile) => File(xFile.path)),
+                    );
+                    debugPrint('Added ${selectedImages.length} images to list');
+                    setModalState(() {}); // Trigger rebuild to show images
+                  } else {
+                    debugPrint('No images selected (user cancelled or no images)');
+                  }
+                } catch (e, stackTrace) {
+                  debugPrint('Error picking images: $e');
+                  debugPrint('Error type: ${e.runtimeType}');
+                  debugPrint('Stack trace: $stackTrace');
+                  
+                  String errorMessage = 'Failed to pick images';
+                  if (e.toString().contains('permission')) {
+                    errorMessage = 'Permission denied. Please grant photo access in app settings.';
+                  } else if (e.toString().contains('camera')) {
+                    errorMessage = 'Camera access denied. Please grant camera permission.';
+                  } else {
+                    errorMessage = 'Failed to pick images: ${e.toString()}';
+                  }
+                  
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(errorMessage),
+                        duration: const Duration(seconds: 4),
+                        action: SnackBarAction(
+                          label: 'OK',
+                          onPressed: () {},
+                        ),
+                      ),
+                    );
+                  }
+                }
+              }
+
               Future<void> submit() async {
-                if (_isCreating) return;
+                if (_isCreating || isUploadingImages) return;
                 final title = titleController.text.trim();
                 final desc = descriptionController.text.trim();
                 if (title.isEmpty || desc.isEmpty) {
@@ -537,7 +619,39 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                 }
                 setModalState(() => _isCreating = true);
                 try {
-                  final imageUrl = imageUrlController.text.trim();
+                  String imageUrl = '';
+                  
+                  // Upload images first if any are selected
+                  if (selectedImages.isNotEmpty) {
+                    isUploadingImages = true;
+                    setModalState(() {}); // Update UI to show uploading state
+                    
+                    try {
+                      // Upload images without recipe_id (empty string for new recipes)
+                      final imageUrls = await _recipeRepository.uploadRecipeImages(
+                        selectedImages,
+                        recipeId: null, // Will send empty string for new recipe
+                      );
+                      // Use the first image URL as the main image
+                      if (imageUrls.isNotEmpty) {
+                        imageUrl = imageUrls.first;
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to upload images: $e')),
+                        );
+                      }
+                      _isCreating = false;
+                      isUploadingImages = false;
+                      setModalState(() {});
+                      return;
+                    } finally {
+                      isUploadingImages = false;
+                      setModalState(() {});
+                    }
+                  }
+
                   final data = <String, dynamic>{
                     'title': title,
                     'description': desc,
@@ -554,25 +668,43 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
 
                   final created = await _recipeRepository.createRecipe(data);
                   if (!mounted) return;
+                  
+                  // Reset loading state before closing
+                  setModalState(() {
+                    _isCreating = false;
+                  });
+                  
+                  // Update the recipes list
                   setState(() {
                     _recipes.insert(0, created);
                     if (created.isBookmarked) {
                       _favoriteRecipes.insert(0, created);
                     }
                   });
+                  
+                  // Close the modal
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Created "${created.title}"')),
+                  
+                  // Show success message using parent context
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(
+                      content: Text('Recipe "${created.title}" created successfully!'),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 2),
+                    ),
                   );
                 } catch (e) {
                   if (mounted) {
+                    setModalState(() {
+                      _isCreating = false;
+                    });
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to create: $e')),
+                      SnackBar(
+                        content: Text('Failed to create recipe: $e'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 3),
+                      ),
                     );
-                  }
-                } finally {
-                  if (mounted) {
-                    setModalState(() => _isCreating = false);
                   }
                 }
               }
@@ -781,14 +913,88 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                         ),
                       ],
                     ),
-                    _buildTextField(imageUrlController, 'Image URL',
-                        icon: Icons.image),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Recipe Image',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    // Selected images display
+                    if (selectedImages.isNotEmpty)
+                      SizedBox(
+                        height: 120,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: selectedImages.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              width: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.file(
+                                      selectedImages[index],
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: Material(
+                                      color: Colors.black.withOpacity(0.5),
+                                      shape: const CircleBorder(),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        onPressed: () {
+                                          selectedImages.removeAt(index);
+                                          setModalState(() {}); // Trigger rebuild
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    // Image picker button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: pickImages,
+                        icon: const Icon(Icons.add_photo_alternate),
+                        label: Text(selectedImages.isEmpty
+                            ? 'Select Images'
+                            : 'Add More Images'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: kPrimaryColor,
+                          side: const BorderSide(color: kPrimaryColor),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _isCreating ? null : submit,
-                        icon: _isCreating
+                        onPressed: (_isCreating || isUploadingImages) ? null : submit,
+                        icon: (_isCreating || isUploadingImages)
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
@@ -796,7 +1002,13 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                                     CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.check),
-                        label: Text(_isCreating ? 'Creating...' : 'Create'),
+                        label: Text(
+                          isUploadingImages
+                              ? 'Uploading images...'
+                              : _isCreating
+                                  ? 'Creating...'
+                                  : 'Create',
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: kPrimaryColor,
                           foregroundColor: Colors.white,

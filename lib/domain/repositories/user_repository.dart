@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:rupp_final_mad/data/models/user_profile.dart';
 
 abstract class UserRepository {
@@ -7,4 +8,6 @@ abstract class UserRepository {
     required String photoUrl,
     required String bio,
   });
+  Future<String> uploadProfileImage(File imageFile);
+  Future<void> deleteProfileImage();
 }

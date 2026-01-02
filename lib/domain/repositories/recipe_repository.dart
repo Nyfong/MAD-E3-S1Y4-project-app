@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:rupp_final_mad/data/models/recipe.dart';
 
 abstract class RecipeRepository {
@@ -8,4 +9,8 @@ abstract class RecipeRepository {
   Future<void> deleteRecipe(String id);
   Future<Recipe> createRecipe(Map<String, dynamic> data);
   Future<Recipe> updateRecipe(String id, Map<String, dynamic> data);
+  Future<List<String>> uploadRecipeImages(
+    List<File> imageFiles, {
+    String? recipeId,
+  });
 }

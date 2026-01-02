@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:rupp_final_mad/domain/repositories/recipe_repository.dart';
 import 'package:rupp_final_mad/data/datasources/recipe_remote_datasource.dart';
 import 'package:rupp_final_mad/data/models/recipe.dart';
@@ -71,6 +72,21 @@ class RecipeRepositoryImpl implements RecipeRepository {
       return await _remoteDataSource.updateRecipe(id, data);
     } catch (e) {
       throw Exception('Failed to update recipe: $e');
+    }
+  }
+
+  @override
+  Future<List<String>> uploadRecipeImages(
+    List<File> imageFiles, {
+    String? recipeId,
+  }) async {
+    try {
+      return await _remoteDataSource.uploadRecipeImages(
+        imageFiles,
+        recipeId: recipeId,
+      );
+    } catch (e) {
+      throw Exception('Failed to upload recipe images: $e');
     }
   }
 }

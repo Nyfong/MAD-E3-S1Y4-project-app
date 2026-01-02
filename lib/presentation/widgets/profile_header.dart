@@ -9,6 +9,7 @@ class ProfileHeader extends StatelessWidget {
   final String? photoUrl;
   final String? bio;
   final int? recipesCount;
+  final VoidCallback? onEditPhoto;
 
   const ProfileHeader({
     super.key,
@@ -17,6 +18,7 @@ class ProfileHeader extends StatelessWidget {
     this.photoUrl,
     this.bio,
     this.recipesCount,
+    this.onEditPhoto,
   });
 
   @override
@@ -54,20 +56,48 @@ class ProfileHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Avatar
-          CircleAvatar(
-            radius: 38,
-            backgroundColor: Colors.white.withOpacity(0.12),
-            backgroundImage: resolvedPhotoUrl != null
-                ? NetworkImage(resolvedPhotoUrl)
-                : null,
-            child: resolvedPhotoUrl == null
-                ? const Icon(
-                    Icons.person_rounded,
-                    size: 40,
-                    color: Colors.white,
-                  )
-                : null,
+          // Avatar with edit button
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 38,
+                backgroundColor: Colors.white.withOpacity(0.12),
+                backgroundImage: resolvedPhotoUrl != null
+                    ? NetworkImage(resolvedPhotoUrl)
+                    : null,
+                child: resolvedPhotoUrl == null
+                    ? const Icon(
+                        Icons.person_rounded,
+                        size: 40,
+                        color: Colors.white,
+                      )
+                    : null,
+              ),
+              if (onEditPhoto != null)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: onEditPhoto,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: kPrimaryColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 18),
           // Name, email, bio and stats

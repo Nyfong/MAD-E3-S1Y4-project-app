@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:rupp_final_mad/data/api/api_client.dart';
 import 'package:rupp_final_mad/data/api/api_config.dart';
@@ -131,16 +132,47 @@ class RecipeRemoteDataSource {
 
   Future<Recipe> createRecipe(Map<String, dynamic> data) async {
     try {
+      // API expects an array of recipe objects for bulk endpoint
+      final requestData = [data];
+      
       final response = await _apiClient.post(
         ApiConfig.recipeCreateEndpoint,
-        data: data,
+        data: requestData,
       );
 
-      if (response.containsKey('payload')) {
-        return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+      // The API returns an array, so we need to extract the first recipe
+      if (response is List) {
+        if (response.isNotEmpty) {
+          final firstItem = response[0];
+          if (firstItem is Map<String, dynamic>) {
+            return Recipe.fromJson(firstItem);
+          } else {
+            throw Exception('Invalid response format: expected Map in array');
+          }
+        } else {
+          throw Exception('Empty response array from API');
+        }
+      }
+      
+      // Handle if response is wrapped in payload
+      if (response is Map<String, dynamic>) {
+        if (response.containsKey('payload')) {
+          final payload = response['payload'];
+          if (payload is List && payload.isNotEmpty) {
+            final firstItem = payload[0];
+            if (firstItem is Map<String, dynamic>) {
+              return Recipe.fromJson(firstItem);
+            }
+          } else if (payload is Map<String, dynamic>) {
+            return Recipe.fromJson(payload);
+          }
+        }
+        
+        // Fallback: try to parse as single recipe object
+        return Recipe.fromJson(response);
       }
 
-      return Recipe.fromJson(response);
+      throw Exception('Unexpected response format: ${response.runtimeType}');
     } catch (e) {
       debugPrint('API create recipe failed: $e');
       rethrow;
@@ -161,6 +193,56 @@ class RecipeRemoteDataSource {
       return Recipe.fromJson(response);
     } catch (e) {
       debugPrint('API update recipe failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<String>> uploadRecipeImages(
+    List<File> imageFiles, {
+    String? recipeId,
+  }) async {
+    try {
+      // Add recipe_id field (empty string if not provided, for new recipes)
+      final additionalFields = <String, String>{
+        'recipe_id': recipeId ?? '',
+      };
+      
+      final response = await _apiClient.postMultipart(
+        ApiConfig.uploadRecipeImagesEndpoint,
+        files: imageFiles,
+        fieldName: 'files', // API expects 'files' field name
+        additionalFields: additionalFields,
+      );
+
+      // Extract image URLs from response
+      // Expected response format: {"payload": {"urls": ["url1", "url2", ...]}}
+      // or {"urls": ["url1", "url2", ...]}
+      List<String> imageUrls = [];
+      
+      if (response.containsKey('payload')) {
+        final payload = response['payload'] as Map<String, dynamic>;
+        if (payload.containsKey('urls')) {
+          final urls = payload['urls'] as List;
+          imageUrls = urls.map((url) => url.toString()).toList();
+        } else if (payload.containsKey('imageUrl')) {
+          // Single image URL
+          imageUrls = [payload['imageUrl'].toString()];
+        }
+      } else if (response.containsKey('urls')) {
+        final urls = response['urls'] as List;
+        imageUrls = urls.map((url) => url.toString()).toList();
+      } else if (response.containsKey('imageUrl')) {
+        // Single image URL
+        imageUrls = [response['imageUrl'].toString()];
+      }
+
+      if (imageUrls.isEmpty) {
+        throw Exception('No image URLs returned from upload');
+      }
+
+      return imageUrls;
+    } catch (e) {
+      debugPrint('API upload recipe images failed: $e');
       rethrow;
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:rupp_final_mad/data/api/api_client.dart';
 import 'package:rupp_final_mad/data/api/api_config.dart';
@@ -54,6 +55,55 @@ class UserRemoteDataSource {
     } catch (e) {
       debugPrint('Failed to update user profile: $e');
       throw Exception('Failed to update user profile: $e');
+    }
+  }
+
+  Future<String> uploadProfileImage(File imageFile) async {
+    try {
+      final response = await _apiClient.postMultipart(
+        ApiConfig.uploadProfileImageEndpoint,
+        files: [imageFile],
+        fieldName: 'file', // API expects 'file' field name for single file
+      );
+
+      // Extract image URL from response
+      // Expected response format: {"payload": {"url": "..."}} or {"url": "..."}
+      String imageUrl = '';
+      
+      if (response is Map<String, dynamic>) {
+        if (response.containsKey('payload')) {
+          final payload = response['payload'] as Map<String, dynamic>;
+          if (payload.containsKey('url')) {
+            imageUrl = payload['url'].toString();
+          } else if (payload.containsKey('photoUrl')) {
+            imageUrl = payload['photoUrl'].toString();
+          }
+        } else if (response.containsKey('url')) {
+          imageUrl = response['url'].toString();
+        } else if (response.containsKey('photoUrl')) {
+          imageUrl = response['photoUrl'].toString();
+        }
+      }
+
+      if (imageUrl.isEmpty) {
+        throw Exception('No image URL returned from upload');
+      }
+
+      return imageUrl;
+    } catch (e) {
+      debugPrint('API upload profile image failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteProfileImage() async {
+    try {
+      await _apiClient.delete(
+        ApiConfig.deleteProfileImageEndpoint,
+      );
+    } catch (e) {
+      debugPrint('API delete profile image failed: $e');
+      rethrow;
     }
   }
 }

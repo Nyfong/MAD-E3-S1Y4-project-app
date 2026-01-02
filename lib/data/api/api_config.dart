@@ -11,7 +11,7 @@ class ApiConfig {
 
     // Use remote server by default
     if (!useLocalhost) {
-      return 'http://34.101.55.193:8000/api/v1';
+      return 'https://api-mad.procare.sbs/api/v1';
     }
 
     // Localhost configuration (for development)
@@ -35,14 +35,19 @@ class ApiConfig {
 
   // User endpoints
   static const String userProfileEndpoint = '/users/me';
+  static const String uploadProfileImageEndpoint = '/users/me/profile-image';
+  static const String deleteProfileImageEndpoint = '/users/me/profile-image';
 
   // Recipe endpoints
   static String recipesEndpoint({int page = 1, int limit = 20}) =>
       '/recipes/?page=$page&limit=$limit';
   static String recipeDetailEndpoint(String id) => '/recipes/$id';
   static String recipeLikeEndpoint(String id) => '/recipes/$id/like';
-  static const String recipeCreateEndpoint = '/recipes/';
+  static const String recipeCreateEndpoint = '/recipes/bulk';
   static const String userRecipesEndpoint = '/users/me/recipes';
+  
+  // Upload endpoints
+  static const String uploadRecipeImagesEndpoint = '/upload/recipe-images';
 }
 
 

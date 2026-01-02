@@ -1,6 +1,8 @@
 // File: lib/screens/profile_screen.dart
 
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:rupp_final_mad/data/models/user_profile.dart';
 import 'package:rupp_final_mad/data/repositories/user_repository_impl.dart';
@@ -54,6 +56,183 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _errorMessage = 'Failed to load profile: ${e.toString()}';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _handleProfileImageAction() async {
+    if (_userProfile == null) return;
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Upload Photo'),
+              onTap: () => Navigator.pop(context, 'upload'),
+            ),
+            if (_userProfile?.photoUrl != null &&
+                _userProfile!.photoUrl!.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Delete Photo', style: TextStyle(color: Colors.red)),
+                onTap: () => Navigator.pop(context, 'delete'),
+              ),
+            ListTile(
+              leading: const Icon(Icons.cancel),
+              title: const Text('Cancel'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (action == 'upload') {
+      await _uploadProfileImage();
+    } else if (action == 'delete') {
+      await _deleteProfileImage();
+    }
+  }
+
+  Future<void> _uploadProfileImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      // Show loading dialog
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      try {
+        final imageFile = File(pickedFile.path);
+        final imageUrl = await _userRepository.uploadProfileImage(imageFile);
+
+        // Update profile with new image URL
+        if (_userProfile != null) {
+          await _userRepository.updateUserProfile(
+            displayName: _userProfile!.displayName,
+            photoUrl: imageUrl,
+            bio: _userProfile!.bio ?? '',
+          );
+        }
+
+        // Reload profile
+        await _loadUserProfile();
+
+        if (!mounted) return;
+        Navigator.pop(context); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile image uploaded successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteProfileImage() async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Profile Image'),
+        content: const Text('Are you sure you want to delete your profile image?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Show loading dialog
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      await _userRepository.deleteProfileImage();
+
+      // Update profile with empty image URL
+      if (_userProfile != null) {
+        await _userRepository.updateUserProfile(
+          displayName: _userProfile!.displayName,
+          photoUrl: '',
+          bio: _userProfile!.bio ?? '',
+        );
+      }
+
+      // Reload profile
+      await _loadUserProfile();
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile image deleted successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -223,6 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         photoUrl: _userProfile?.photoUrl,
                         bio: _userProfile?.bio,
                         recipesCount: _userProfile?.recipesCount,
+                        onEditPhoto: _handleProfileImageAction,
                       ),
                       const SizedBox(height: 24),
                       // Profile settings section
