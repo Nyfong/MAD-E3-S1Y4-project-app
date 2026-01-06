@@ -135,7 +135,7 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Grid of category cards - Only 3 categories
+            // Grid of category cards - 6 categories
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -145,45 +145,90 @@ class ExploreScreen extends StatelessWidget {
               childAspectRatio: 1.25,
               children: [
                 CategoryCard(
-                  title: 'Minute',
-                  icon: Icons.timer_rounded,
+                  title: 'Dessert',
+                  icon: Icons.cake_rounded,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const CategoryRecipesScreen(
-                          category: 'minute',
-                          title: 'Quick Recipes',
+                          category: 'dessert',
+                          title: 'Dessert',
                         ),
                       ),
                     );
                   },
                 ),
                 CategoryCard(
-                  title: 'Level',
-                  icon: Icons.trending_up_rounded,
+                  title: 'Fast Food',
+                  icon: Icons.fastfood_rounded,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const CategoryRecipesScreen(
-                          category: 'level',
-                          title: 'By Difficulty',
+                          category: 'Fast food',
+                          title: 'Fast Food',
                         ),
                       ),
                     );
                   },
                 ),
                 CategoryCard(
-                  title: 'Love',
-                  icon: Icons.favorite_rounded,
+                  title: 'Asean',
+                  icon: Icons.restaurant_rounded,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const CategoryRecipesScreen(
-                          category: 'love',
-                          title: 'Liked Recipes',
+                          category: 'Asean',
+                          title: 'Asean',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                CategoryCard(
+                  title: 'Drink',
+                  icon: Icons.local_drink_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryRecipesScreen(
+                          category: 'drink',
+                          title: 'Drink',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                CategoryCard(
+                  title: 'Meatless',
+                  icon: Icons.eco_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryRecipesScreen(
+                          category: 'meatless',
+                          title: 'Meatless',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                CategoryCard(
+                  title: 'Soup',
+                  icon: Icons.soup_kitchen_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryRecipesScreen(
+                          category: 'soup',
+                          title: 'Soup',
                         ),
                       ),
                     );

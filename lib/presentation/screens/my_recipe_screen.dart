@@ -73,29 +73,12 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
       // Load user recipes for "All" tab
       final recipes = await _recipeRepository.getUserRecipes();
       
-      // Load all recipes to filter favorites (bookmarked recipes)
-      // Load first few pages to get bookmarked recipes (optimized for performance)
-      List<Recipe> allRecipes = [];
-      int page = 1;
-      bool hasMore = true;
-      const maxPages = 5; // Load up to 5 pages (50 recipes) for favorites
-      
-      while (hasMore && page <= maxPages) {
-        try {
-          final pageRecipes = await _recipeRepository.getRecipes(page: page, limit: 10);
-          allRecipes.addAll(pageRecipes);
-          hasMore = pageRecipes.length == 10;
-          page++;
-        } catch (e) {
-          debugPrint('Error loading favorites page $page: $e');
-          break;
-        }
-      }
+      // Load bookmarked recipes directly from API
+      final bookmarkedRecipes = await _recipeRepository.getBookmarkedRecipes();
       
       setState(() {
         _recipes = recipes;
-        // Filter favorites from all recipes where isBookmarked == true
-        _favoriteRecipes = allRecipes.where((r) => r.isBookmarked).toList();
+        _favoriteRecipes = bookmarkedRecipes;
         _isLoading = false;
       });
     } catch (e) {
@@ -176,9 +159,9 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
         TextEditingController(text: recipe.cookingTime.toString());
     final servingsController =
         TextEditingController(text: recipe.servings.toString());
-    final difficultyController = TextEditingController(text: recipe.difficulty);
-    final cuisineController = TextEditingController(text: recipe.cuisine);
     final imageUrlController = TextEditingController(text: recipe.imageUrl);
+    String selectedDifficulty = recipe.difficulty;
+    String selectedCuisine = recipe.cuisine;
 
     // Keep ingredient & instruction controllers alive for the entire bottom sheet
     final ingredientControllers = <TextEditingController>[
@@ -234,6 +217,19 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                 }
                 setModalState(() => _isCreating = true);
                 try {
+                  // Validate cuisine (category) selection
+                  if (selectedCuisine.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a category'),
+                      ),
+                    );
+                    setModalState(() {
+                      _isCreating = false;
+                    });
+                    return;
+                  }
+
                   final imageUrl = imageUrlController.text.trim();
                   final data = <String, dynamic>{
                     'title': title,
@@ -243,8 +239,8 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                     'cookingTime':
                         int.tryParse(cookingTimeController.text) ?? 0,
                     'servings': int.tryParse(servingsController.text) ?? 1,
-                    'difficulty': difficultyController.text.trim(),
-                    'cuisine': cuisineController.text.trim(),
+                    'difficulty': selectedDifficulty,
+                    'cuisine': selectedCuisine,
                     'tags': recipe.tags,
                     'imageUrl': imageUrl,
                   };
@@ -252,18 +248,19 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                   final updated =
                       await _recipeRepository.updateRecipe(recipe.id, data);
                   if (!mounted) return;
-                  setState(() {
-                    _recipes = _recipes
-                        .map((r) => r.id == recipe.id ? updated : r)
-                        .toList();
-                    _favoriteRecipes = _favoriteRecipes
-                        .map((r) => r.id == recipe.id ? updated : r)
-                        .toList();
-                  });
+                  
+                  // Close the modal first
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Updated "${updated.title}"')),
-                  );
+                  
+                  // Reload recipes from server to get fresh data (not mock data)
+                  await _loadUserRecipes();
+                  
+                  // Show success message
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Updated "${data['title']}"')),
+                    );
+                  }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -460,6 +457,36 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      const Text(
+                        'Category',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildButtonSelector(
+                        options: const ['dessert', 'Fast food', 'Asean', 'drink', 'meatless', 'soup'],
+                        selectedValue: selectedCuisine,
+                        onSelected: (value) {
+                          setModalState(() {
+                            selectedCuisine = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Difficulty',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildButtonSelector(
+                        options: const ['easy', 'medium', 'hard'],
+                        selectedValue: selectedDifficulty,
+                        onSelected: (value) {
+                          setModalState(() {
+                            selectedDifficulty = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -501,8 +528,8 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     final descriptionController = TextEditingController();
     final cookingTimeController = TextEditingController(text: '0');
     final servingsController = TextEditingController(text: '1');
-    final difficultyController = TextEditingController(text: 'easy');
-    final cuisineController = TextEditingController(text: 'general');
+    String selectedDifficulty = 'easy';
+    String selectedCuisine = '';
 
     // Keep ingredient & instruction controllers alive for the entire bottom sheet
     final ingredientControllers = <TextEditingController>[
@@ -522,19 +549,20 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: !_isCreating,
+      enableDrag: !_isCreating,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: StatefulBuilder(
-            builder: (context, setModalState) {
+        return FractionallySizedBox(
+          heightFactor: 0.9,
+          child: Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: StatefulBuilder(
+              builder: (context, setModalState) {
 
               Future<void> pickImages() async {
                 try {
@@ -652,6 +680,19 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                     }
                   }
 
+                  // Validate cuisine (category) selection
+                  if (selectedCuisine.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a category'),
+                      ),
+                    );
+                    setModalState(() {
+                      _isCreating = false;
+                    });
+                    return;
+                  }
+
                   final data = <String, dynamic>{
                     'title': title,
                     'description': desc,
@@ -660,8 +701,8 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                     'cookingTime':
                         int.tryParse(cookingTimeController.text) ?? 0,
                     'servings': int.tryParse(servingsController.text) ?? 1,
-                    'difficulty': difficultyController.text.trim(),
-                    'cuisine': cuisineController.text.trim(),
+                    'difficulty': selectedDifficulty,
+                    'cuisine': selectedCuisine,
                     'tags': <String>[],
                     'imageUrl': imageUrl,
                   };
@@ -674,63 +715,147 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                     _isCreating = false;
                   });
                   
-                  // Update the recipes list
-                  setState(() {
-                    _recipes.insert(0, created);
-                    if (created.isBookmarked) {
-                      _favoriteRecipes.insert(0, created);
+                  // Close the modal first
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                  }
+                  
+                  // Reload recipes from server to get fresh data (not mock data)
+                  // This ensures we see the actual recipe data that was saved
+                  await _loadUserRecipes();
+                  
+                  // Show success message using parent context after a short delay
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    if (parentContext.mounted) {
+                      ScaffoldMessenger.of(parentContext).showSnackBar(
+                        SnackBar(
+                          content: Text('Recipe "${data['title']}" created successfully!'),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
                     }
                   });
-                  
-                  // Close the modal
-                  Navigator.of(context).pop();
-                  
-                  // Show success message using parent context
-                  ScaffoldMessenger.of(parentContext).showSnackBar(
-                    SnackBar(
-                      content: Text('Recipe "${created.title}" created successfully!'),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                } catch (e) {
+                } catch (e, stackTrace) {
+                  debugPrint('Error creating recipe: $e');
+                  debugPrint('Stack trace: $stackTrace');
                   if (mounted) {
                     setModalState(() {
                       _isCreating = false;
                     });
+                    // Extract a more user-friendly error message
+                    String errorMessage = 'Failed to create recipe';
+                    if (e.toString().contains('status')) {
+                      // Extract status code from error
+                      final match = RegExp(r'status: (\d+)').firstMatch(e.toString());
+                      if (match != null) {
+                        final statusCode = match.group(1);
+                        if (statusCode == '401' || statusCode == '403') {
+                          errorMessage = 'Authentication failed. Please log in again.';
+                        } else if (statusCode == '400') {
+                          errorMessage = 'Invalid recipe data. Please check all fields.';
+                        } else if (statusCode == '500') {
+                          errorMessage = 'Server error. Please try again later.';
+                        } else {
+                          errorMessage = 'Failed to create recipe (Error $statusCode)';
+                        }
+                      }
+                    } else if (e.toString().contains('format') || e.toString().contains('parse')) {
+                      errorMessage = 'Server response format error. Please try again.';
+                    } else {
+                      errorMessage = 'Failed to create recipe: ${e.toString()}';
+                    }
+                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Failed to create recipe: $e'),
+                        content: Text(errorMessage),
                         backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 3),
+                        duration: const Duration(seconds: 4),
+                        action: SnackBarAction(
+                          label: 'Dismiss',
+                          textColor: Colors.white,
+                          onPressed: () {},
+                        ),
                       ),
                     );
                   }
                 }
               }
 
-              return SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              return Column(
+                children: [
+                  // Header with drag handle and close button
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey.shade200,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
                       children: [
                         const Text(
                           'Add New Recipe',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed:
-                              _isCreating ? null : () => Navigator.pop(context),
-                        )
+                        TextButton(
+                          onPressed: (_isCreating || isUploadingImages) 
+                              ? null 
+                              : () {
+                                  Navigator.of(context).pop();
+                                },
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: (_isCreating || isUploadingImages) 
+                                ? null 
+                                : () {
+                                    Navigator.of(context).pop();
+                                  },
+                            tooltip: 'Close',
+                          ),
+                        ),
                       ],
                     ),
+                  ),
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  // Scrollable content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                     const SizedBox(height: 8),
                     _buildTextField(titleController, 'Title',
                         icon: Icons.title, required: true),
@@ -894,24 +1019,35 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            difficultyController,
-                            'Difficulty',
-                            icon: Icons.whatshot,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildTextField(
-                            cuisineController,
-                            'Cuisine',
-                            icon: Icons.public,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Category',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildButtonSelector(
+                      options: const ['dessert', 'Fast food', 'Asean', 'drink', 'meatless', 'soup'],
+                      selectedValue: selectedCuisine,
+                      onSelected: (value) {
+                        setModalState(() {
+                          selectedCuisine = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Difficulty',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildButtonSelector(
+                      options: const ['easy', 'medium', 'hard'],
+                      selectedValue: selectedDifficulty,
+                      onSelected: (value) {
+                        setModalState(() {
+                          selectedDifficulty = value;
+                        });
+                      },
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -1020,13 +1156,51 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                  ],
-                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               );
             },
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildButtonSelector({
+    required List<String> options,
+    required String selectedValue,
+    required Function(String) onSelected,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: options.map((option) {
+        final isSelected = selectedValue == option;
+        return ChoiceChip(
+          label: Text(option),
+          selected: isSelected,
+          onSelected: (selected) {
+            if (selected) {
+              onSelected(option);
+            }
+          },
+          selectedColor: kPrimaryColor.withOpacity(0.2),
+          backgroundColor: Colors.grey.shade200,
+          labelStyle: TextStyle(
+            color: isSelected ? kPrimaryColor : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+          side: BorderSide(
+            color: isSelected ? kPrimaryColor : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        );
+      }).toList(),
     );
   }
 
@@ -1077,7 +1251,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
-                      const Icon(Icons.favorite, color: Colors.red),
+                      const Icon(Icons.bookmark, color: kPrimaryColor),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
@@ -1101,8 +1275,8 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       children: const [
-                        Icon(Icons.favorite_border,
-                            color: Colors.redAccent, size: 48),
+                        Icon(Icons.bookmark_border,
+                            color: kPrimaryColor, size: 48),
                         SizedBox(height: 12),
                         Text(
                           'No favorites yet',
@@ -1162,8 +1336,8 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                           ),
                           subtitle: Row(
                             children: [
-                              const Icon(Icons.favorite,
-                                  size: 14, color: Colors.redAccent),
+                              const Icon(Icons.thumb_up,
+                                  size: 14, color: Colors.blue),
                               const SizedBox(width: 4),
                               Text('${recipe.likesCount}'),
                               const SizedBox(width: 12),
@@ -1316,7 +1490,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Icon(Icons.favorite,
+                                const Icon(Icons.thumb_up,
                                     color: Colors.white, size: 14),
                                 const SizedBox(width: 4),
                                 Text(
@@ -1540,7 +1714,7 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
-                                          Icons.favorite,
+                                          Icons.thumb_up,
                                           color: Colors.white,
                                         ),
                                       ),

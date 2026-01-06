@@ -7,10 +7,10 @@ class RecipeRepositoryImpl implements RecipeRepository {
   final RecipeRemoteDataSource _remoteDataSource = RecipeRemoteDataSource();
 
   @override
-  Future<List<Recipe>> getRecipes({int page = 1, int limit = 20}) async {
+  Future<List<Recipe>> getRecipes({int page = 1, int limit = 20, String? cuisine}) async {
     try {
       final response =
-          await _remoteDataSource.getRecipes(page: page, limit: limit);
+          await _remoteDataSource.getRecipes(page: page, limit: limit, cuisine: cuisine);
       return response.payload;
     } catch (e) {
       throw Exception('Failed to get recipes: $e');
@@ -37,6 +37,16 @@ class RecipeRepositoryImpl implements RecipeRepository {
   }
 
   @override
+  Future<List<Recipe>> getBookmarkedRecipes() async {
+    try {
+      final response = await _remoteDataSource.getBookmarkedRecipes();
+      return response.payload;
+    } catch (e) {
+      throw Exception('Failed to get bookmarked recipes: $e');
+    }
+  }
+
+  @override
   Future<Recipe> toggleLike(String id, {Recipe? currentRecipe}) async {
     try {
       return await _remoteDataSource.toggleLike(
@@ -45,6 +55,18 @@ class RecipeRepositoryImpl implements RecipeRepository {
       );
     } catch (e) {
       throw Exception('Failed to like recipe: $e');
+    }
+  }
+
+  @override
+  Future<Recipe> toggleBookmark(String id, {Recipe? currentRecipe}) async {
+    try {
+      return await _remoteDataSource.toggleBookmark(
+        id,
+        currentRecipe: currentRecipe,
+      );
+    } catch (e) {
+      throw Exception('Failed to bookmark recipe: $e');
     }
   }
 

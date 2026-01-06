@@ -136,16 +136,6 @@ class ProfileHeader extends StatelessWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    if (recipesCount != null)
-                      _StatChip(
-                        icon: Icons.restaurant_menu_rounded,
-                        label: '$recipesCount recipes',
-                      ),
-                  ],
-                ),
               ],
             ),
           ),

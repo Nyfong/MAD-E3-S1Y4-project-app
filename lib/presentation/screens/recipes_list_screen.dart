@@ -127,19 +127,19 @@ class _RecipesListScreenState extends State<RecipesListScreen> {
 
   // Responsive grid configuration
   int _getCrossAxisCount(double width) {
-    // Always use a single column to show one card per row
-    return 1;
+    // Use 2 columns for grid layout
+    return 2;
   }
 
   double _getChildAspectRatio(double width) {
-    // Make cards tall enough (1 column, Instagram-style layout)
+    // Adjust aspect ratio for 2-column grid layout
     // aspectRatio = width / height  -> smaller value = more height
     if (width > 900) {
-      return 0.7;
-    } else if (width > 600) {
       return 0.75;
-    } else {
+    } else if (width > 600) {
       return 0.8;
+    } else {
+      return 0.85;
     }
   }
 

@@ -21,6 +21,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Recipe? _recipe;
   bool _isLoading = true;
   bool _isLiking = false;
+  bool _isBookmarking = false;
   String _errorMessage = '';
 
   @override
@@ -89,6 +90,36 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         setState(() {
           _isLiking = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleBookmark() async {
+    if (_recipe == null || _isBookmarking) return;
+
+    setState(() {
+      _isBookmarking = true;
+    });
+
+    try {
+      final updatedRecipe = await _recipeRepository.toggleBookmark(
+        _recipe!.id,
+        currentRecipe: _recipe,
+      );
+      if (!mounted) return;
+      setState(() {
+        _recipe = updatedRecipe;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to bookmark recipe: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBookmarking = false;
         });
       }
     }
@@ -194,10 +225,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                     )
                                   : Icon(
                                       _recipe?.isLiked ?? false
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
+                                          ? Icons.thumb_up
+                                          : Icons.thumb_up_outlined,
                                     ),
-                              color: Colors.redAccent,
+                              color: Colors.blue,
                               tooltip: 'Like',
                             ),
                           ],
@@ -284,10 +315,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                           children: [
                                             Icon(
                                               _recipe!.isLiked
-                                                  ? Icons.favorite
-                                                  : Icons.favorite_border,
+                                                  ? Icons.thumb_up
+                                                  : Icons.thumb_up_outlined,
                                               size: 20,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
@@ -313,10 +344,45 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 24),
-                                    _buildStatItem(
-                                      Icons.bookmark,
-                                      '${_recipe!.bookmarksCount}',
-                                      kPrimaryColor,
+                                    InkWell(
+                                      onTap: _isBookmarking ? null : _toggleBookmark,
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 4,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              _recipe!.isBookmarked
+                                                  ? Icons.bookmark
+                                                  : Icons.bookmark_border,
+                                              size: 20,
+                                              color: kPrimaryColor,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${_recipe!.bookmarksCount}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade700,
+                                              ),
+                                            ),
+                                            if (_isBookmarking) ...[
+                                              const SizedBox(width: 6),
+                                              const SizedBox(
+                                                width: 12,
+                                                height: 12,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),

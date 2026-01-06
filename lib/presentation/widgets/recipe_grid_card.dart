@@ -150,9 +150,9 @@ class RecipeGridCard extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.favorite_border,
+                        Icons.thumb_up_outlined,
                         size: isLargeScreen ? 15 : 14,
-                        color: Colors.redAccent,
+                        color: Colors.blue,
                       ),
                       const SizedBox(width: 4),
                       Text(

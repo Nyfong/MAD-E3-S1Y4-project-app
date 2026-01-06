@@ -39,12 +39,19 @@ class ApiConfig {
   static const String deleteProfileImageEndpoint = '/users/me/profile-image';
 
   // Recipe endpoints
-  static String recipesEndpoint({int page = 1, int limit = 20}) =>
-      '/recipes/?page=$page&limit=$limit';
+  static String recipesEndpoint({int page = 1, int limit = 20, String? cuisine}) {
+    String endpoint = '/recipes/?page=$page&limit=$limit';
+    if (cuisine != null && cuisine.isNotEmpty) {
+      endpoint += '&cuisine=${Uri.encodeComponent(cuisine)}';
+    }
+    return endpoint;
+  }
   static String recipeDetailEndpoint(String id) => '/recipes/$id';
   static String recipeLikeEndpoint(String id) => '/recipes/$id/like';
+  static String recipeBookmarkEndpoint(String id) => '/recipes/$id/bookmark';
   static const String recipeCreateEndpoint = '/recipes/bulk';
   static const String userRecipesEndpoint = '/users/me/recipes';
+  static const String bookmarkedRecipesEndpoint = '/recipes/bookmarked';
   
   // Upload endpoints
   static const String uploadRecipeImagesEndpoint = '/upload/recipe-images';

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:rupp_final_mad/data/models/recipe.dart';
 import 'package:rupp_final_mad/data/repositories/recipe_repository_impl.dart';
@@ -58,27 +59,56 @@ class _CategoryRecipesScreenState extends State<CategoryRecipesScreen> {
   }
 
   List<Recipe> _applyFilter(List<Recipe> recipes) {
-    switch (widget.category) {
-      case 'minute':
-        // Show recipes with cooking time <= 30 minutes (quick recipes)
-        return recipes.where((recipe) => recipe.cookingTime <= 30).toList();
-      case 'level':
-        // Show recipes grouped by difficulty level
-        // Sort by difficulty: Easy, Medium, Hard
-        final sorted = List<Recipe>.from(recipes);
-        sorted.sort((a, b) {
-          final order = {'Easy': 1, 'Medium': 2, 'Hard': 3, 'easy': 1, 'medium': 2, 'hard': 3};
-          final aOrder = order[a.difficulty.toLowerCase()] ?? 4;
-          final bOrder = order[b.difficulty.toLowerCase()] ?? 4;
-          return aOrder.compareTo(bOrder);
-        });
-        return sorted;
-      case 'love':
-        // Show only recipes with likesCount > 0 (recipes that have been liked)
-        return recipes.where((recipe) => recipe.likesCount > 0).toList();
-      default:
-        return recipes;
-    }
+    // Filter by cuisine (which stores the category)
+    // Categories: dessert, Fast food, Asean, drink, meatless, soup
+    // Normalize both strings by removing spaces, hyphens, underscores and converting to lowercase
+    final normalizedCategory = widget.category
+        .toLowerCase()
+        .replaceAll(' ', '')
+        .replaceAll('-', '')
+        .replaceAll('_', '')
+        .trim();
+    
+    return recipes.where((recipe) {
+      if (recipe.cuisine.isEmpty) return false;
+      
+      final normalizedCuisine = recipe.cuisine
+          .toLowerCase()
+          .replaceAll(' ', '')
+          .replaceAll('-', '')
+          .replaceAll('_', '')
+          .trim();
+      
+      // Try exact match first
+      if (normalizedCuisine == normalizedCategory) {
+        return true;
+      }
+      
+      // Special case for "Fast food" variations - check if both contain "fast" and "food"
+      // This handles: "Fast food", "fastfood", "fast-food", "Fast Food", etc.
+      if (normalizedCategory.contains('fast') && normalizedCategory.contains('food')) {
+        if (normalizedCuisine.contains('fast') && normalizedCuisine.contains('food')) {
+          return true;
+        }
+      }
+      
+      // Reverse check: if cuisine contains "fast" and "food", and category is "fastfood"
+      if (normalizedCuisine.contains('fast') && normalizedCuisine.contains('food')) {
+        if (normalizedCategory.contains('fast') && normalizedCategory.contains('food')) {
+          return true;
+        }
+      }
+      
+      // For other categories, try contains match if both are similar length
+      if (normalizedCategory.length >= 3 && normalizedCuisine.length >= 3) {
+        if (normalizedCuisine.contains(normalizedCategory) || 
+            normalizedCategory.contains(normalizedCuisine)) {
+          return true;
+        }
+      }
+      
+      return false;
+    }).toList();
   }
 
   Future<void> _loadRecipes({bool loadMore = false}) async {
@@ -94,9 +124,11 @@ class _CategoryRecipesScreenState extends State<CategoryRecipesScreen> {
     }
 
     try {
-      final recipes = await _recipeRepository.getRecipes(
+      // Try API filtering first with the exact category name
+      List<Recipe> recipes = await _recipeRepository.getRecipes(
         page: _currentPage,
         limit: _limit,
+        cuisine: widget.category, // Pass category to API for server-side filtering
       );
 
       setState(() {
@@ -105,8 +137,50 @@ class _CategoryRecipesScreenState extends State<CategoryRecipesScreen> {
         } else {
           _allRecipes = recipes;
         }
+        // Always apply client-side filter to ensure correct filtering
+        // This handles cases where API doesn't filter correctly or returns wrong format
         _filteredRecipes = _applyFilter(_allRecipes);
-        _hasMore = recipes.length == _limit;
+        
+        // If we got recipes from API but filtering resulted in empty list,
+        // and this is the first page, try loading all recipes without filter
+        if (!loadMore && _filteredRecipes.isEmpty && recipes.isNotEmpty) {
+          _loadAllRecipesAndFilter();
+          return;
+        }
+        
+        // Only set hasMore if we got the expected number of recipes
+        // If filtering reduced the count significantly, we might have more
+        _hasMore = recipes.length >= _limit;
+        _isLoading = false;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      // If API call fails completely, try loading all recipes without filter
+      if (!loadMore) {
+        _loadAllRecipesAndFilter();
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load recipes: ${e.toString()}';
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadAllRecipesAndFilter() async {
+    try {
+      debugPrint('Loading all recipes without cuisine filter for client-side filtering');
+      // Load all recipes without cuisine filter and filter client-side
+      final allRecipes = await _recipeRepository.getRecipes(
+        page: 1,
+        limit: _limit * 3, // Load more recipes to find matches
+      );
+      
+      setState(() {
+        _allRecipes = allRecipes;
+        _filteredRecipes = _applyFilter(_allRecipes);
+        _hasMore = allRecipes.length >= (_limit * 3);
         _isLoading = false;
         _isLoadingMore = false;
       });
@@ -152,28 +226,40 @@ class _CategoryRecipesScreenState extends State<CategoryRecipesScreen> {
   }
 
   IconData _getCategoryIcon() {
-    switch (widget.category) {
-      case 'minute':
-        return Icons.timer_rounded;
-      case 'level':
-        return Icons.trending_up_rounded;
-      case 'love':
-        return Icons.favorite_rounded;
+    switch (widget.category.toLowerCase()) {
+      case 'dessert':
+        return Icons.cake_rounded;
+      case 'fast food':
+        return Icons.fastfood_rounded;
+      case 'asean':
+        return Icons.restaurant_rounded;
+      case 'drink':
+        return Icons.local_drink_rounded;
+      case 'meatless':
+        return Icons.eco_rounded;
+      case 'soup':
+        return Icons.soup_kitchen_rounded;
       default:
         return Icons.restaurant_menu_rounded;
     }
   }
 
   String _getCategoryDescription() {
-    switch (widget.category) {
-      case 'minute':
-        return 'Quick recipes ready in 30 minutes or less';
-      case 'level':
-        return 'Recipes organized by difficulty level';
-      case 'love':
-        return 'Popular recipes with likes from the community';
+    switch (widget.category.toLowerCase()) {
+      case 'dessert':
+        return 'Sweet treats and desserts';
+      case 'fast food':
+        return 'Quick and convenient meals';
+      case 'asean':
+        return 'Traditional Southeast Asian cuisine';
+      case 'drink':
+        return 'Refreshing beverages and drinks';
+      case 'meatless':
+        return 'Vegetarian and plant-based recipes';
+      case 'soup':
+        return 'Warm and comforting soups';
       default:
-        return 'Browse recipes';
+        return 'Browse recipes by category';
     }
   }
 
@@ -314,18 +400,14 @@ class _CategoryRecipesScreenState extends State<CategoryRecipesScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      widget.category == 'love'
-                                          ? Icons.favorite_border_rounded
-                                          : Icons.search_off,
+                                      _getCategoryIcon(),
                                       size: 80,
                                       color: kPrimaryColor.withOpacity(0.5),
                                     ),
                                     const SizedBox(height: 24),
-                                    Text(
-                                      widget.category == 'love'
-                                          ? 'No popular recipes yet'
-                                          : 'No recipes found',
-                                      style: const TextStyle(
+                                    const Text(
+                                      'No recipes found',
+                                      style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.black54,
@@ -333,9 +415,7 @@ class _CategoryRecipesScreenState extends State<CategoryRecipesScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      widget.category == 'love'
-                                          ? 'Recipes with likes will appear here'
-                                          : 'Try again later',
+                                      'No recipes in this category yet',
                                       style: TextStyle(
                                         color: Colors.grey.shade500,
                                         fontSize: 16,
