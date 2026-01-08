@@ -44,6 +44,38 @@ class Recipe {
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
+    // Extract primary image URL with fallbacks:
+    // 1) explicit imageUrl/image_url field
+    // 2) first entry from images/imagesUrls/urls arrays if present
+    String _extractImageUrl(Map<String, dynamic> data) {
+      final direct = data['imageUrl'] as String? ??
+          data['image_url'] as String? ??
+          '';
+      // Trim whitespace and check for valid URL
+      final trimmed = direct.trim();
+      if (trimmed.isNotEmpty && trimmed != 'string') return trimmed;
+
+      final dynamic images = data['images'] ?? data['imageUrls'] ?? data['urls'];
+      if (images is List && images.isNotEmpty) {
+        final first = images.first.toString().trim();
+        if (first.isNotEmpty && first != 'string') return first;
+      }
+      return '';
+    }
+
+    // Extract author photo with fallbacks
+    String _extractAuthorPhoto(Map<String, dynamic> data) {
+      final direct = data['authorPhotoURL'] as String? ??
+          data['author_photo_url'] as String? ??
+          data['authorPhoto'] as String? ??
+          data['author_photo'] as String? ??
+          '';
+      return direct;
+    }
+
+    final resolvedImageUrl = _extractImageUrl(json);
+    final resolvedAuthorPhoto = _extractAuthorPhoto(json);
+
     return Recipe(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
       title: json['title'] as String? ?? '',
@@ -53,14 +85,12 @@ class Recipe {
                    (json['cooking_time'] as num?)?.toInt() ?? 0,
       servings: (json['servings'] as num?)?.toInt() ?? 1,
       cuisine: json['cuisine'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String? ?? 
-                json['image_url'] as String? ?? '',
+      imageUrl: resolvedImageUrl,
       authorId: json['authorId'] as String? ?? 
                 json['author_id'] as String? ?? '',
       authorName: json['authorName'] as String? ?? 
                   json['author_name'] as String? ?? '',
-      authorPhotoURL: json['authorPhotoURL'] as String? ?? 
-                      json['author_photo_url'] as String? ?? '',
+      authorPhotoURL: resolvedAuthorPhoto,
       authorBio: json['authorBio'] as String? ?? 
                  json['author_bio'] as String? ?? '',
       ingredients: json['ingredients'] != null

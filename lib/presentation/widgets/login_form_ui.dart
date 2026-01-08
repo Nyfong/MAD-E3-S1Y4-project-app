@@ -243,9 +243,17 @@ class LoginFormUI extends StatelessWidget {
               // 7. Social/Phone Buttons
 
               // Google Sign-In Button
-              OutlinedButton.icon(
+              OutlinedButton(
                 onPressed: isGoogleLoading ? null : onGoogleLoginPressed,
-                icon: isGoogleLoading
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+                child: isGoogleLoading
                     ? const SizedBox(
                   width: 20,
                   height: 20,
@@ -255,15 +263,6 @@ class LoginFormUI extends StatelessWidget {
                     : Image.asset(
                   'assets/images/google_logo.png',
                   height: 20,
-                ),
-                label: const Text('Google'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  side: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
 

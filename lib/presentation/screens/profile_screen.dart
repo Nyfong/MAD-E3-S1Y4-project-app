@@ -443,14 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 24),
                       // Logout
-                      const Text(
-                        'Security',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
+                      
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(

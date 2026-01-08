@@ -45,6 +45,62 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
   }
 
+  Widget _buildRecipeImage() {
+    if (_recipe == null) {
+      return Container(
+        color: kPrimaryColor.withOpacity(0.1),
+        child: const Icon(
+          Icons.restaurant_menu,
+          size: 100,
+          color: kPrimaryColor,
+        ),
+      );
+    }
+    
+    final imageUrl = _resolveImageUrl(_recipe!.imageUrl) ?? _recipe!.imageUrl;
+    if (imageUrl.isEmpty || imageUrl == 'string') {
+      return Container(
+        color: kPrimaryColor.withOpacity(0.1),
+        child: const Icon(
+          Icons.restaurant_menu,
+          size: 100,
+          color: kPrimaryColor,
+        ),
+      );
+    }
+    
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: kPrimaryColor.withOpacity(0.1),
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+              color: kPrimaryColor,
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: kPrimaryColor.withOpacity(0.1),
+          child: const Icon(
+            Icons.restaurant_menu,
+            size: 100,
+            color: kPrimaryColor,
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _loadRecipe() async {
     setState(() {
       _isLoading = true;
@@ -68,35 +124,93 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Future<void> _toggleLike() async {
     if (_recipe == null || _isLiking) return;
 
+    // Store the current recipe as a backup
+    final currentRecipe = _recipe!;
+
     setState(() {
       _isLiking = true;
     });
 
     try {
       final updatedRecipe = await _recipeRepository.toggleLike(
-        _recipe!.id,
-        currentRecipe: _recipe,
+        currentRecipe.id,
+        currentRecipe: currentRecipe,
       );
       if (!mounted) return;
-      setState(() {
-        _recipe = updatedRecipe;
-      });
+      
+      // Always ensure we have a valid recipe - never set to null
+      if (updatedRecipe != null && updatedRecipe.id.isNotEmpty) {
+        setState(() {
+          _recipe = updatedRecipe;
+          _isLiking = false;
+        });
+      } else {
+        // If updated recipe is invalid, keep the current recipe but update the like status optimistically
+        setState(() {
+          _recipe = Recipe(
+            id: currentRecipe.id,
+            title: currentRecipe.title,
+            description: currentRecipe.description,
+            difficulty: currentRecipe.difficulty,
+            cookingTime: currentRecipe.cookingTime,
+            servings: currentRecipe.servings,
+            cuisine: currentRecipe.cuisine,
+            imageUrl: currentRecipe.imageUrl,
+            authorId: currentRecipe.authorId,
+            authorName: currentRecipe.authorName,
+            authorPhotoURL: currentRecipe.authorPhotoURL,
+            authorBio: currentRecipe.authorBio,
+            ingredients: currentRecipe.ingredients,
+            instructions: currentRecipe.instructions,
+            tags: currentRecipe.tags,
+            likesCount: currentRecipe.likesCount + (currentRecipe.isLiked ? -1 : 1),
+            bookmarksCount: currentRecipe.bookmarksCount,
+            isLiked: !currentRecipe.isLiked,
+            isBookmarked: currentRecipe.isBookmarked,
+            createdAt: currentRecipe.createdAt,
+          );
+          _isLiking = false;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to like recipe: ${e.toString()}')),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLiking = false;
-        });
-      }
+      // On error, update optimistically to keep UI consistent
+      setState(() {
+        _recipe = Recipe(
+          id: currentRecipe.id,
+          title: currentRecipe.title,
+          description: currentRecipe.description,
+          difficulty: currentRecipe.difficulty,
+          cookingTime: currentRecipe.cookingTime,
+          servings: currentRecipe.servings,
+          cuisine: currentRecipe.cuisine,
+          imageUrl: currentRecipe.imageUrl,
+          authorId: currentRecipe.authorId,
+          authorName: currentRecipe.authorName,
+          authorPhotoURL: currentRecipe.authorPhotoURL,
+          authorBio: currentRecipe.authorBio,
+          ingredients: currentRecipe.ingredients,
+          instructions: currentRecipe.instructions,
+          tags: currentRecipe.tags,
+          likesCount: currentRecipe.likesCount + (currentRecipe.isLiked ? -1 : 1),
+          bookmarksCount: currentRecipe.bookmarksCount,
+          isLiked: !currentRecipe.isLiked,
+          isBookmarked: currentRecipe.isBookmarked,
+          createdAt: currentRecipe.createdAt,
+        );
+        _isLiking = false;
+      });
     }
   }
 
   Future<void> _toggleBookmark() async {
     if (_recipe == null || _isBookmarking) return;
+
+    // Store the current recipe as a backup
+    final currentRecipe = _recipe!;
 
     setState(() {
       _isBookmarking = true;
@@ -104,24 +218,76 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
     try {
       final updatedRecipe = await _recipeRepository.toggleBookmark(
-        _recipe!.id,
-        currentRecipe: _recipe,
+        currentRecipe.id,
+        currentRecipe: currentRecipe,
       );
       if (!mounted) return;
-      setState(() {
-        _recipe = updatedRecipe;
-      });
+      
+      // Always ensure we have a valid recipe - never set to null
+      if (updatedRecipe != null && updatedRecipe.id.isNotEmpty) {
+        setState(() {
+          _recipe = updatedRecipe;
+          _isBookmarking = false;
+        });
+      } else {
+        // If updated recipe is invalid, keep the current recipe but update the bookmark status optimistically
+        setState(() {
+          _recipe = Recipe(
+            id: currentRecipe.id,
+            title: currentRecipe.title,
+            description: currentRecipe.description,
+            difficulty: currentRecipe.difficulty,
+            cookingTime: currentRecipe.cookingTime,
+            servings: currentRecipe.servings,
+            cuisine: currentRecipe.cuisine,
+            imageUrl: currentRecipe.imageUrl,
+            authorId: currentRecipe.authorId,
+            authorName: currentRecipe.authorName,
+            authorPhotoURL: currentRecipe.authorPhotoURL,
+            authorBio: currentRecipe.authorBio,
+            ingredients: currentRecipe.ingredients,
+            instructions: currentRecipe.instructions,
+            tags: currentRecipe.tags,
+            likesCount: currentRecipe.likesCount,
+            bookmarksCount: currentRecipe.bookmarksCount + (currentRecipe.isBookmarked ? -1 : 1),
+            isLiked: currentRecipe.isLiked,
+            isBookmarked: !currentRecipe.isBookmarked,
+            createdAt: currentRecipe.createdAt,
+          );
+          _isBookmarking = false;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to bookmark recipe: ${e.toString()}')),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isBookmarking = false;
-        });
-      }
+      // On error, update optimistically to keep UI consistent
+      setState(() {
+        _recipe = Recipe(
+          id: currentRecipe.id,
+          title: currentRecipe.title,
+          description: currentRecipe.description,
+          difficulty: currentRecipe.difficulty,
+          cookingTime: currentRecipe.cookingTime,
+          servings: currentRecipe.servings,
+          cuisine: currentRecipe.cuisine,
+          imageUrl: currentRecipe.imageUrl,
+          authorId: currentRecipe.authorId,
+          authorName: currentRecipe.authorName,
+          authorPhotoURL: currentRecipe.authorPhotoURL,
+          authorBio: currentRecipe.authorBio,
+          ingredients: currentRecipe.ingredients,
+          instructions: currentRecipe.instructions,
+          tags: currentRecipe.tags,
+          likesCount: currentRecipe.likesCount,
+          bookmarksCount: currentRecipe.bookmarksCount + (currentRecipe.isBookmarked ? -1 : 1),
+          isLiked: currentRecipe.isLiked,
+          isBookmarked: !currentRecipe.isBookmarked,
+          createdAt: currentRecipe.createdAt,
+        );
+        _isBookmarking = false;
+      });
     }
   }
 
@@ -233,21 +399,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                           ],
                           flexibleSpace: FlexibleSpaceBar(
-                            background: Image.network(
-                              _resolveImageUrl(_recipe!.imageUrl) ??
-                                  _recipe!.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: kPrimaryColor.withOpacity(0.1),
-                                  child: const Icon(
-                                    Icons.restaurant_menu,
-                                    size: 100,
-                                    color: kPrimaryColor,
-                                  ),
-                                );
-                              },
-                            ),
+                            background: _buildRecipeImage(),
                           ),
                           leading: IconButton(
                             icon: const Icon(Icons.arrow_back),
@@ -303,84 +455,96 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 // Stats
                                 Row(
                                   children: [
-                                    InkWell(
-                                      onTap: _isLiking ? null : _toggleLike,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 4,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              _recipe!.isLiked
-                                                  ? Icons.thumb_up
-                                                  : Icons.thumb_up_outlined,
-                                              size: 20,
-                                              color: Colors.blue,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              '${_recipe!.likesCount}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey.shade700,
+                                    GestureDetector(
+                                      onTap: _isLiking ? null : () {
+                                        _toggleLike();
+                                      },
+                                      behavior: HitTestBehavior.opaque,
+                                      child: InkWell(
+                                        onTap: null,
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 4,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                _recipe!.isLiked
+                                                    ? Icons.thumb_up
+                                                    : Icons.thumb_up_outlined,
+                                                size: 20,
+                                                color: Colors.blue,
                                               ),
-                                            ),
-                                            if (_isLiking) ...[
-                                              const SizedBox(width: 6),
-                                              const SizedBox(
-                                                width: 12,
-                                                height: 12,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${_recipe!.likesCount}',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey.shade700,
                                                 ),
                                               ),
+                                              if (_isLiking) ...[
+                                                const SizedBox(width: 6),
+                                                const SizedBox(
+                                                  width: 12,
+                                                  height: 12,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                  ),
+                                                ),
+                                              ],
                                             ],
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     ),
                                     const SizedBox(width: 24),
-                                    InkWell(
-                                      onTap: _isBookmarking ? null : _toggleBookmark,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 4,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              _recipe!.isBookmarked
-                                                  ? Icons.bookmark
-                                                  : Icons.bookmark_border,
-                                              size: 20,
-                                              color: kPrimaryColor,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              '${_recipe!.bookmarksCount}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey.shade700,
+                                    GestureDetector(
+                                      onTap: _isBookmarking ? null : () {
+                                        _toggleBookmark();
+                                      },
+                                      behavior: HitTestBehavior.opaque,
+                                      child: InkWell(
+                                        onTap: null,
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 4,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                _recipe!.isBookmarked
+                                                    ? Icons.bookmark
+                                                    : Icons.bookmark_border,
+                                                size: 20,
+                                                color: kPrimaryColor,
                                               ),
-                                            ),
-                                            if (_isBookmarking) ...[
-                                              const SizedBox(width: 6),
-                                              const SizedBox(
-                                                width: 12,
-                                                height: 12,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${_recipe!.bookmarksCount}',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey.shade700,
                                                 ),
                                               ),
+                                              if (_isBookmarking) ...[
+                                                const SizedBox(width: 6),
+                                                const SizedBox(
+                                                  width: 12,
+                                                  height: 12,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                  ),
+                                                ),
+                                              ],
                                             ],
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     ),

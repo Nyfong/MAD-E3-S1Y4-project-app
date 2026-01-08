@@ -146,37 +146,39 @@ rupp-final-mad/
 **Purpose:** Handles all external data operations (API calls, local storage)
 
 #### 📡 API (`api/`)
+
 - **`api_client.dart`**: Centralized HTTP client
   - Handles GET, POST, PUT, DELETE requests
   - Supports multipart file uploads
   - Automatic token injection
   - Error handling & response parsing
-  
 - **`api_config.dart`**: API configuration
   - Base URL definition
   - Endpoint constants
 
 #### 💾 Data Sources (`datasources/`)
+
 - **`auth_remote_datasource.dart`**: Authentication API calls
   - Login, Register, Google Sign-in, Phone OTP
-  
 - **`recipe_remote_datasource.dart`**: Recipe-related API calls
   - Fetch recipes, categories, search
-  
 - **`user_remote_datasource.dart`**: User profile API calls
   - Get/Update user profile, avatar upload
 
 #### 📦 Models (`models/`)
+
 - Data Transfer Objects (DTOs) for API communication
 - Converts JSON to Dart objects and vice versa
 - Includes: LoginRequest, LoginResponse, Recipe, UserProfile, etc.
 
 #### 🔄 Repository Implementations (`repositories/`)
+
 - Implements domain layer interfaces
 - Coordinates between data sources and domain
 - Handles error cases and fallback data
 
 #### 🛠️ Services (`services/`)
+
 - **`token_storage_service.dart`**: Secure token storage using SharedPreferences
 - **`onboarding_service.dart`**: Manages first-time user onboarding state
 - **`fallback_data_service.dart`**: Provides mock data when API is unavailable
@@ -188,12 +190,11 @@ rupp-final-mad/
 **Purpose:** Contains business logic and defines contracts
 
 #### 🔌 Repository Interfaces (`repositories/`)
+
 - **`auth_repository.dart`**: Authentication contract
   - Methods: login(), register(), loginWithGoogle(), logout()
-  
 - **`recipe_repository.dart`**: Recipe operations contract
   - Methods: getRecipes(), getRecipeById(), searchRecipes()
-  
 - **`user_repository.dart`**: User operations contract
   - Methods: getUserProfile(), updateProfile()
 
@@ -206,20 +207,23 @@ rupp-final-mad/
 **Purpose:** UI components and state management
 
 #### 🔄 Providers (`providers/`)
+
 - **`auth_provider.dart`**: Manages authentication state
   - User login status, user info, auth methods
-  
 - **`theme_provider.dart`**: Manages app theme
   - Light/Dark mode switching
 
 #### 📱 Screens (`screens/`)
+
 **Authentication Flow:**
+
 - `onboarding_screen.dart` - First-time user introduction
 - `login_screen.dart` - Email/password login
 - `register_screen.dart` - New user registration
 - `phone_login_screen.dart` - Phone number authentication
 
 **Main App Screens:**
+
 - `home_screen.dart` - Main container with bottom navigation
 - `home_tab_screen.dart` - Home tab content (featured recipes)
 - `explore_screen.dart` - Browse and discover recipes
@@ -227,6 +231,7 @@ rupp-final-mad/
 - `profile_screen.dart` - User profile and settings
 
 **Detail Screens:**
+
 - `recipe_detail_screen.dart` - Full recipe details
 - `recipes_list_screen.dart` - List view of recipes
 - `category_recipes_screen.dart` - Recipes filtered by category
@@ -234,7 +239,9 @@ rupp-final-mad/
 - `edit_profile_screen.dart` - Edit user information
 
 #### 🧩 Widgets (`widgets/`)
+
 Reusable UI components for consistent design:
+
 - Form components (login, register)
 - Card components (recipe, category)
 - Loading states (skeletons)
@@ -245,29 +252,36 @@ Reusable UI components for consistent design:
 ## 🛠️ Key Technologies & Dependencies
 
 ### Core Framework
+
 - **Flutter SDK**: >=3.0.0 <4.0.0
 - **Dart**: Modern Dart language features
 
 ### State Management
+
 - **Provider** (^6.1.1): State management solution
 
 ### Networking
+
 - **HTTP** (^1.1.0): HTTP client for API calls
 
 ### Authentication
+
 - **Firebase Auth** (^5.3.1): Authentication service
 - **Firebase Core** (^3.6.0): Firebase initialization
 - **Google Sign In** (^6.2.1): Google authentication
 
 ### Storage
+
 - **Shared Preferences** (^2.2.2): Local key-value storage
 
 ### UI/UX
+
 - **Shimmer** (^3.0.0): Loading skeleton animations
 - **Intl** (^0.19.0): Internationalization & date formatting
 - **Image Picker** (^1.0.7): Image selection from gallery/camera
 
 ### Platform Support
+
 - ✅ Android
 - ✅ iOS
 - ✅ macOS
@@ -294,6 +308,7 @@ Backend Server
 ```
 
 **Response Flow (Reverse):**
+
 ```
 Backend → API Client → Data Source → Repository → Provider → UI Update
 ```
@@ -303,22 +318,26 @@ Backend → API Client → Data Source → Repository → Provider → UI Update
 ## 🎯 Key Features
 
 1. **🔐 Authentication**
+
    - Email/Password login
    - User registration
    - Google Sign-in
    - Phone number OTP authentication
 
 2. **📱 Navigation**
+
    - Bottom navigation bar (4 tabs)
    - Top app bar with user info
    - Deep linking support
 
 3. **🎨 Theming**
+
    - Light/Dark mode
    - Material Design 3
    - Custom color scheme
 
 4. **📖 Recipe Management**
+
    - Browse recipes
    - Search functionality
    - Category filtering
@@ -326,6 +345,7 @@ Backend → API Client → Data Source → Repository → Provider → UI Update
    - Author profiles
 
 5. **👤 User Profile**
+
    - Profile viewing
    - Profile editing
    - Avatar upload
@@ -353,11 +373,13 @@ Backend → API Client → Data Source → Repository → Provider → UI Update
 ## 🚀 Getting Started
 
 1. **Install Dependencies:**
+
    ```bash
    flutter pub get
    ```
 
 2. **Run the App:**
+
    ```bash
    flutter run
    ```
@@ -382,5 +404,4 @@ Backend → API Client → Data Source → Repository → Provider → UI Update
 
 ---
 
-*Generated for RUPP Final MAD Project Presentation*
-
+_Generated for RUPP Final MAD Project Presentation_

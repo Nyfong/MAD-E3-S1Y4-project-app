@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:rupp_final_mad/data/models/recipe.dart';
 import 'package:rupp_final_mad/data/api/api_config.dart';
 
@@ -22,17 +23,23 @@ class RecipeGridCard extends StatelessWidget {
   }
 
   String _resolveImageUrl(String url) {
-    if (url.isEmpty) return '';
-    if (url.startsWith('http')) return url;
+    if (url.isEmpty || url == 'string' || url.trim().isEmpty) return '';
+    
+    // If it's already a full URL (http or https), return it as-is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url.trim();
+    }
 
+    // Otherwise, prepend the base URL
     final baseUri = Uri.parse(ApiConfig.baseUrl);
     final hostBase =
         '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}';
 
-    if (url.startsWith('/')) {
-      return '$hostBase$url';
+    final trimmedUrl = url.trim();
+    if (trimmedUrl.startsWith('/')) {
+      return '$hostBase$trimmedUrl';
     } else {
-      return '$hostBase/$url';
+      return '$hostBase/$trimmedUrl';
     }
   }
 
@@ -42,9 +49,15 @@ class RecipeGridCard extends StatelessWidget {
     final isLargeScreen = screenWidth > 900;
 
     final mainImageUrl = _resolveImageUrl(recipe.imageUrl);
-    final authorPhoto = recipe.authorPhotoURL.isNotEmpty
+    final authorPhoto = (recipe.authorPhotoURL.isNotEmpty && 
+                        recipe.authorPhotoURL != 'string')
         ? _resolveImageUrl(recipe.authorPhotoURL)
         : null;
+    
+    // Debug: Print image URL to help diagnose issues
+    if (kDebugMode && mainImageUrl.isNotEmpty) {
+      debugPrint('RecipeGridCard: Loading image from: $mainImageUrl');
+    }
 
     return Card(
       elevation: 2,
@@ -66,9 +79,14 @@ class RecipeGridCard extends StatelessWidget {
                   CircleAvatar(
                     radius: isLargeScreen ? 14 : 13,
                     backgroundColor: kPrimaryColor.withOpacity(0.15),
-                    backgroundImage:
-                        authorPhoto != null ? NetworkImage(authorPhoto) : null,
-                    child: authorPhoto == null
+                    backgroundImage: (authorPhoto != null && 
+                                     authorPhoto.isNotEmpty && 
+                                     authorPhoto != 'string')
+                        ? NetworkImage(authorPhoto)
+                        : null,
+                    child: (authorPhoto == null || 
+                            authorPhoto.isEmpty || 
+                            authorPhoto == 'string')
                         ? Icon(
                             Icons.person,
                             size: isLargeScreen ? 16 : 15,
@@ -97,11 +115,39 @@ class RecipeGridCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (mainImageUrl.isNotEmpty)
+                  if (mainImageUrl.isNotEmpty && mainImageUrl != 'string')
                     Image.network(
                       mainImageUrl,
                       fit: BoxFit.cover,
+                      headers: const {'Accept': 'image/*'},
+                      cacheWidth: 400,
+                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                        if (wasSynchronouslyLoaded) return child;
+                        return AnimatedOpacity(
+                          opacity: frame == null ? 0 : 1,
+                          duration: const Duration(milliseconds: 200),
+                          child: child,
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: kPrimaryColor.withOpacity(0.1),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              color: kPrimaryColor,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      },
                       errorBuilder: (context, error, stackTrace) {
+                        debugPrint('Image load error for URL: $mainImageUrl');
+                        debugPrint('Error: $error');
                         return Container(
                           color: kPrimaryColor.withOpacity(0.1),
                           child: const Icon(

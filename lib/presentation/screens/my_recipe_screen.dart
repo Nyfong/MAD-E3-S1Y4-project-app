@@ -1305,26 +1305,60 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                               horizontal: 16, vertical: 8),
                           leading: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              recipe.imageUrl,
-                              width: 54,
-                              height: 54,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 54,
-                                  height: 54,
-                                  decoration: BoxDecoration(
-                                    color: kPrimaryColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
+                            child: (recipe.imageUrl.isNotEmpty && recipe.imageUrl != 'string')
+                                ? Image.network(
+                                    recipe.imageUrl,
+                                    width: 54,
+                                    height: 54,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        width: 54,
+                                        height: 54,
+                                        decoration: BoxDecoration(
+                                          color: kPrimaryColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                    loadingProgress.expectedTotalBytes!
+                                                : null,
+                                            color: kPrimaryColor,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 54,
+                                        height: 54,
+                                        decoration: BoxDecoration(
+                                          color: kPrimaryColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(
+                                          Icons.restaurant,
+                                          color: kPrimaryColor,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    width: 54,
+                                    height: 54,
+                                    decoration: BoxDecoration(
+                                      color: kPrimaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.restaurant,
+                                      color: kPrimaryColor,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    Icons.restaurant,
-                                    color: kPrimaryColor,
-                                  ),
-                                );
-                              },
-                            ),
                           ),
                           title: Text(
                             recipe.title,
@@ -1396,18 +1430,43 @@ class _MyRecipeScreenState extends State<MyRecipeScreen> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: Image.network(
-                        recipe.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: kPrimaryColor.withOpacity(0.06),
-                          child: Icon(
-                            Icons.restaurant_menu_rounded,
-                            color: kPrimaryColor.withOpacity(0.6),
-                            size: 52,
-                          ),
-                        ),
-                      ),
+                      child: (recipe.imageUrl.isNotEmpty && recipe.imageUrl != 'string')
+                          ? Image.network(
+                              recipe.imageUrl,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: kPrimaryColor.withOpacity(0.06),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                      color: kPrimaryColor,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: kPrimaryColor.withOpacity(0.06),
+                                child: Icon(
+                                  Icons.restaurant_menu_rounded,
+                                  color: kPrimaryColor.withOpacity(0.6),
+                                  size: 52,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: kPrimaryColor.withOpacity(0.06),
+                              child: Icon(
+                                Icons.restaurant_menu_rounded,
+                                color: kPrimaryColor.withOpacity(0.6),
+                                size: 52,
+                              ),
+                            ),
                     ),
                     Positioned(
                       top: 10,

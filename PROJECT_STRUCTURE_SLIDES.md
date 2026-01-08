@@ -29,12 +29,14 @@
 ### 📱 lib/ - Main Application Code
 
 #### 🎯 main.dart
+
 - Application entry point
 - Provider setup
 - Theme configuration
 - Navigation routing
 
 #### 📊 data/ - Data Layer
+
 ```
 data/
 ├── api/                    # API Communication
@@ -66,6 +68,7 @@ data/
 ```
 
 #### 🎯 domain/ - Domain Layer
+
 ```
 domain/
 └── repositories/           # Repository Interfaces
@@ -75,6 +78,7 @@ domain/
 ```
 
 #### 🎨 presentation/ - Presentation Layer
+
 ```
 presentation/
 ├── providers/              # State Management
@@ -156,49 +160,52 @@ presentation/
 
 ## 🛠️ Key Technologies
 
-| Category | Technology |
-|----------|-----------|
-| **Framework** | Flutter 3.0+ |
-| **Language** | Dart |
-| **Architecture** | Clean Architecture |
-| **State Management** | Provider |
-| **Networking** | HTTP |
-| **Authentication** | Firebase Auth, Google Sign-In |
-| **Storage** | SharedPreferences |
-| **UI Components** | Material Design 3 |
-| **Loading** | Shimmer |
+| Category             | Technology                    |
+| -------------------- | ----------------------------- |
+| **Framework**        | Flutter 3.0+                  |
+| **Language**         | Dart                          |
+| **Architecture**     | Clean Architecture            |
+| **State Management** | Provider                      |
+| **Networking**       | HTTP                          |
+| **Authentication**   | Firebase Auth, Google Sign-In |
+| **Storage**          | SharedPreferences             |
+| **UI Components**    | Material Design 3             |
+| **Loading**          | Shimmer                       |
 
 ---
 
 ## 📊 Project Statistics
 
-| Component | Count |
-|-----------|-------|
-| **Screens** | 14 |
-| **Widgets** | 10 |
-| **Models** | 6 |
+| Component        | Count                            |
+| ---------------- | -------------------------------- |
+| **Screens**      | 14                               |
+| **Widgets**      | 10                               |
+| **Models**       | 6                                |
 | **Repositories** | 3 interfaces + 3 implementations |
-| **Data Sources** | 3 |
-| **Providers** | 2 |
-| **Services** | 3 |
-| **Platforms** | 4 (Android, iOS, macOS, Web) |
+| **Data Sources** | 3                                |
+| **Providers**    | 2                                |
+| **Services**     | 3                                |
+| **Platforms**    | 4 (Android, iOS, macOS, Web)     |
 
 ---
 
 ## 🎯 Main Features
 
 1. **Authentication**
+
    - Email/Password
    - Google Sign-in
    - Phone OTP
 
 2. **Recipe Management**
+
    - Browse recipes
    - Search & filter
    - Recipe details
    - Categories
 
 3. **User Profile**
+
    - View profile
    - Edit profile
    - Avatar upload
@@ -227,15 +234,14 @@ rupp-final-mad/
 
 ## 🔑 Key Files
 
-| File | Purpose |
-|------|---------|
-| `main.dart` | App entry point |
-| `api_client.dart` | HTTP communication |
+| File                 | Purpose               |
+| -------------------- | --------------------- |
+| `main.dart`          | App entry point       |
+| `api_client.dart`    | HTTP communication    |
 | `auth_provider.dart` | Auth state management |
-| `home_screen.dart` | Main app screen |
-| `pubspec.yaml` | Dependencies |
+| `home_screen.dart`   | Main app screen       |
+| `pubspec.yaml`       | Dependencies          |
 
 ---
 
-*Use this format for slide presentations*
-
+_Use this format for slide presentations_

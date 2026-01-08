@@ -176,12 +176,40 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: imageUrl.isNotEmpty
+                  child: (imageUrl.isNotEmpty && imageUrl != 'string')
                       ? Image.network(
                           imageUrl,
                           width: 64,
                           height: 64,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              width: 64,
+                              height: 64,
+                              color: Colors.grey.withOpacity(0.15),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 64,
+                              height: 64,
+                              color: Colors.grey.withOpacity(0.15),
+                              child: const Icon(
+                                Icons.restaurant_menu,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
                         )
                       : Container(
                           width: 64,

@@ -57,20 +57,39 @@ class RecipeRemoteDataSource {
         ApiConfig.recipeLikeEndpoint(id),
       );
 
-      if (response.containsKey('payload')) {
-        return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+      // If API returns a payload with recipe data, use it
+      if (response.containsKey('payload') && response['payload'] != null) {
+        try {
+          return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+        } catch (e) {
+          debugPrint('Failed to parse recipe from payload: $e');
+          // Fall through to use optimistic update
+        }
       }
 
-      // If API returns only status/message, fall back to optimistic toggle
+      // Always use optimistic toggle if we have currentRecipe
+      // This ensures we never lose the recipe data
       if (currentRecipe != null) {
         return _toggleLocal(currentRecipe);
       }
 
-      return Recipe.fromJson(response);
+      // Last resort: try to parse response as recipe (shouldn't happen in normal flow)
+      try {
+        return Recipe.fromJson(response);
+      } catch (e) {
+        debugPrint('Failed to parse response as recipe: $e');
+        // Use fallback if parsing fails
+        final fallback = FallbackDataService.getFallbackRecipe(id);
+        return _toggleLocal(fallback);
+      }
     } catch (e) {
       debugPrint('API like failed, using fallback toggle: $e');
-      final fallback =
-          currentRecipe ?? FallbackDataService.getFallbackRecipe(id);
+      // Always use optimistic update if we have currentRecipe
+      if (currentRecipe != null) {
+        return _toggleLocal(currentRecipe);
+      }
+      // Otherwise use fallback
+      final fallback = FallbackDataService.getFallbackRecipe(id);
       return _toggleLocal(fallback);
     }
   }
@@ -84,20 +103,39 @@ class RecipeRemoteDataSource {
         ApiConfig.recipeBookmarkEndpoint(id),
       );
 
-      if (response.containsKey('payload')) {
-        return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+      // If API returns a payload with recipe data, use it
+      if (response.containsKey('payload') && response['payload'] != null) {
+        try {
+          return Recipe.fromJson(response['payload'] as Map<String, dynamic>);
+        } catch (e) {
+          debugPrint('Failed to parse recipe from payload: $e');
+          // Fall through to use optimistic update
+        }
       }
 
-      // If API returns only status/message, fall back to optimistic toggle
+      // Always use optimistic toggle if we have currentRecipe
+      // This ensures we never lose the recipe data
       if (currentRecipe != null) {
         return _toggleBookmarkLocal(currentRecipe);
       }
 
-      return Recipe.fromJson(response);
+      // Last resort: try to parse response as recipe (shouldn't happen in normal flow)
+      try {
+        return Recipe.fromJson(response);
+      } catch (e) {
+        debugPrint('Failed to parse response as recipe: $e');
+        // Use fallback if parsing fails
+        final fallback = FallbackDataService.getFallbackRecipe(id);
+        return _toggleBookmarkLocal(fallback);
+      }
     } catch (e) {
       debugPrint('API bookmark failed, using fallback toggle: $e');
-      final fallback =
-          currentRecipe ?? FallbackDataService.getFallbackRecipe(id);
+      // Always use optimistic update if we have currentRecipe
+      if (currentRecipe != null) {
+        return _toggleBookmarkLocal(currentRecipe);
+      }
+      // Otherwise use fallback
+      final fallback = FallbackDataService.getFallbackRecipe(id);
       return _toggleBookmarkLocal(fallback);
     }
   }
